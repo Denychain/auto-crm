@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" 
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 1. ЕНАМИ (Довідники статусів)
+// ==========================================
+
+enum OrderStatus {
+  QUEUE           // 🟡 Черга / Очікування
+  DISASSEMBLY     // 🛠 Розбірка/Рихтування
+  PREP            // ⏳ Підготовка
+  PAINT           // 🎨 Фарбування
+  ASSEMBLY        // 🧩 Збірка/Полірування
+  STOP_PARTS      // ⛔ СТОП: Чекаємо запчастини
+  STOP_PAINT      // ⛔ СТОП: Підбір фарби
+  DONE            // ✅ Готово (вмикається лічильник простою)
+  CLOSED          // 🏁 Закрито (гроші отримані)
+  POSTPONED       // ⏸ Відкладено (через обставини клієнта)
+}
+
+enum PartStatus {
+  NEED_TO_BUY     // 🔴 Треба купити
+  ORDERED         // 🟡 Замовлено
+  IN_STOCK        // 🟢 Є в наявності
+}
+
+enum PhotoType {
+  ACT_IN          // Фото-Акт при прийомці (документ)
+  PROCESS         // Фото в процесі (для відправки в месенджер)
+}
+
+// ==========================================
+// 2. ГОЛОВНІ МОДЕЛІ (Клієнт та Авто)
+// ==========================================
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String    @unique
+  note      String?   // Для нотаток (напр. "Просив знижку минулого разу")
+  
+  vehicles  Vehicle[] // Один клієнт може мати кілька авто
+  orders    Order[]   // Прямий зв'язок із замовленнями
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Vehicle {
+  id          String   @id @default(uuid())
+  clientId    String
+  plateNumber String   @unique // Для пошуку Історії Авто (напр. AT1234AA)
+  make        String   // Марка (напр. Volkswagen)
+  model       String   // Модель (напр. Passat)
+  year        Int?
+  
+  client      Client   @relation(fields: [clientId], references: [id])
+  orders      Order[]  // Всі ремонти цього конкретного авто
+  
+  createdAt   DateTime @default(now())
+}
+
+// ==========================================
+// 3. ЯДРО СИСТЕМИ (Картка замовлення)
+// ==========================================
+
+model Order {
+  id               String      @id @default(uuid())
+  clientId         String
+  vehicleId        String
+  
+  status           OrderStatus @default(QUEUE)
+  description      String?     // Загальний опис проблеми
+  
+  // -- Фінансовий блок (Гнучкість) --
+  estimatedPrice   Decimal     @db.Decimal(10, 2) // Орієнтовна ціна (на початку)
+  advancePayment   Decimal     @default(0) @db.Decimal(10, 2) // Завдаток
+  totalPaid        Decimal     @default(0) @db.Decimal(10, 2) // Скільки вже сплачено по факту
+  
+  // -- Дати та Таймери --
+  readyDate        DateTime?   // Фіксується, коли статус стає DONE (для лічильника простою)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // -- Зв'язки --
+  client           Client      @relation(fields: [clientId], references: [id])
+  vehicle          Vehicle     @relation(fields: [vehicleId], references: [id])
+  
+  works            OrderWork[] // Додаткові роботи (Конструктор)
+  parts            OrderPart[] // Запчастини / Матеріали
+  photos           OrderPhoto[]// Фото-Архів
+  workerShares     WorkerShare[] // Розподіл грошей між майстрами
+}
+
+// ==========================================
+// 4. КОНСТРУКТОР ТА ФІНАНСИ
+// ==========================================
+
+// Додаткові роботи (Поле 1, Поле 2...)
+model OrderWork {
+  id          String   @id @default(uuid())
+  orderId     String
+  name        String   // Напр. "Пайка бампера", "Базова робота"
+  price       Decimal  @db.Decimal(10, 2)
+  
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// Модуль "Запчастини" (План/Факт)
+model OrderPart {
+  id             String     @id @default(uuid())
+  orderId        String
+  name           String     // "Ліве крило", "Кліпси"
+  status         PartStatus @default(NEED_TO_BUY)
+  
+  estimatedPrice Decimal    @default(0) @db.Decimal(10, 2) // План (озвучили клієнту)
+  actualPrice    Decimal?   @db.Decimal(10, 2)             // Факт (реальна витрата)
+  
+  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// Фото-Архів
+model OrderPhoto {
+  id          String    @id @default(uuid())
+  orderId     String
+  url         String    // Посилання на AWS S3 / Cloudinary
+  type        PhotoType @default(PROCESS)
+  description String?   // "Авто на стадії ґрунтування" (для шаблону)
+  
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+// Розподіл фінансів (Зарплати майстрам)
+model WorkerShare {
+  id          String   @id @default(uuid())
+  orderId     String
+  workerName  String   // "Ілля", "Тато", "Вася" (або можна винести Worker в окрему таблицю)
+  amount      Decimal  @db.Decimal(10, 2) // Частка у валюті
+  
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// 5. ГЛОБАЛЬНІ МОДУЛІ (Без прив'язки до замовлення)
+// ==========================================
+
+// Модуль "Закупки" (Shopping List)
+model ShoppingListItem {
+  id          String   @id @default(uuid())
+  name        String   // Напр. "Розчинник", "Лак"
+  isNeeded    Boolean  @default(false) // Кнопка "Треба купити"
+  
+  updatedAt   DateTime @updatedAt
+}
+
+// Фонд розвитку ("На мрію")
+model DreamFund {
+  id            String   @id @default(uuid())
+  goalName      String   // Напр. "Нова камера"
+  targetAmount  Decimal  @db.Decimal(10, 2)
+  currentAmount Decimal  @default(0) @db.Decimal(10, 2) // Сюди додаються 5% від закритих замовлень
+  
+  createdAt     DateTime @default(now())
+}
