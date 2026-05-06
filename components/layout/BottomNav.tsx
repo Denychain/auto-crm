@@ -8,12 +8,14 @@ import {
   Users,
   Wallet,
   ShoppingCart,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "Головна", icon: Home },
   { href: "/orders", label: "Замовлення", icon: ClipboardList },
+  { href: "/backlog", label: "Черга", icon: Clock },
   { href: "/clients", label: "Клієнти", icon: Users },
   { href: "/finance", label: "Фінанси", icon: Wallet },
   { href: "/shopping", label: "Закупки", icon: ShoppingCart },
@@ -44,7 +46,7 @@ export function BottomNav({ className }: BottomNavProps) {
               key={href}
               href={href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 text-xs transition-colors",
+                "flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition-colors",
                 isActive
                   ? "text-primary font-medium"
                   : "text-muted-foreground hover:text-foreground"

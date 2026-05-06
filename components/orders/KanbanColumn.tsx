@@ -1,7 +1,8 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { type OrderStatus } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
+import { Clock } from "lucide-react";
 import { STATUS_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { OrderWithRelations } from "@/types/orders";
@@ -13,6 +14,14 @@ interface KanbanColumnProps {
   pendingOrderId: string | null;
 }
 
+function isBacklog(order: OrderWithRelations): boolean {
+  const v = order.advancePayment;
+  if (v == null) return false;
+  if (typeof v === "object" && "toNumber" in (v as object))
+    return (v as { toNumber(): number }).toNumber() > 0;
+  return Number(v) > 0;
+}
+
 export function KanbanColumn({
   status,
   orders,
@@ -20,6 +29,12 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const { label, emoji, color } = STATUS_LABELS[status];
+
+  // For QUEUE: split into backlog (advance > 0) and regular
+  const backlogOrders =
+    status === OrderStatus.QUEUE ? orders.filter(isBacklog) : [];
+  const regularOrders =
+    status === OrderStatus.QUEUE ? orders.filter((o) => !isBacklog(o)) : orders;
 
   return (
     <div className="flex w-[280px] flex-none flex-col rounded-xl border bg-muted/30 overflow-hidden">
@@ -38,13 +53,36 @@ export function KanbanColumn({
         className={cn(
           "flex flex-col gap-2 flex-1 min-h-[120px] p-2",
           "overflow-y-auto",
-          // Limit height so board doesn't overflow viewport
           "max-h-[calc(100dvh-220px)]",
           "transition-colors duration-150",
           isOver && "bg-primary/5 ring-2 ring-primary/20 ring-inset"
         )}
       >
-        {orders.length === 0 ? (
+        {/* Backlog subsection */}
+        {backlogOrders.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5 px-1 py-0.5">
+              <Clock className="size-3 text-amber-600" />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                Очікують виклику
+              </span>
+            </div>
+            {backlogOrders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                isPending={pendingOrderId === order.id}
+                isBacklog
+              />
+            ))}
+            {regularOrders.length > 0 && (
+              <div className="my-1 border-t border-dashed" />
+            )}
+          </div>
+        )}
+
+        {/* Regular orders */}
+        {regularOrders.length === 0 && backlogOrders.length === 0 ? (
           <div
             className={cn(
               "flex flex-1 items-center justify-center py-8",
@@ -55,7 +93,7 @@ export function KanbanColumn({
             Порожньо
           </div>
         ) : (
-          orders.map((order) => (
+          regularOrders.map((order) => (
             <OrderCard
               key={order.id}
               order={order}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Phone, GripVertical, AlertTriangle } from "lucide-react";
+import { Phone, GripVertical, AlertTriangle, Clock } from "lucide-react";
 import type { OrderWithRelations } from "@/types/orders";
 import { calcDebt, calcIdleDays, isOverdue, formatMoney, cn } from "@/lib/utils";
 
@@ -11,9 +11,10 @@ interface OrderCardProps {
   order: OrderWithRelations;
   isPending?: boolean;
   isOverlay?: boolean;
+  isBacklog?: boolean;
 }
 
-export function OrderCard({ order, isPending, isOverlay }: OrderCardProps) {
+export function OrderCard({ order, isPending, isOverlay, isBacklog }: OrderCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: order.id,
@@ -40,7 +41,8 @@ export function OrderCard({ order, isPending, isOverlay }: OrderCardProps) {
         isOverlay && "rotate-1 shadow-xl",
         hasDebt && "border-l-4 border-l-red-500",
         overdue && "border-amber-400 ring-1 ring-amber-300",
-        isPending && "opacity-60"
+        isPending && "opacity-60",
+        isBacklog && "opacity-80 bg-amber-50/60"
       )}
     >
       {/* Spinner while pending server update */}
@@ -65,6 +67,14 @@ export function OrderCard({ order, isPending, isOverlay }: OrderCardProps) {
 
       {/* Clickable card body → order detail */}
       <Link href={`/orders/${order.id}`} className="block p-3 pb-8 pr-7">
+        {/* Backlog badge */}
+        {isBacklog && (
+          <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold text-amber-700">
+            <Clock className="size-3" />
+            Очікує виклику
+          </div>
+        )}
+
         {/* Vehicle */}
         <p className="font-medium text-sm leading-snug">
           {order.vehicle.make} {order.vehicle.model}
@@ -103,7 +113,7 @@ export function OrderCard({ order, isPending, isOverlay }: OrderCardProps) {
         </p>
       </Link>
 
-      {/* Phone button — bottom-right, stops click propagation */}
+      {/* Phone button */}
       <a
         href={`tel:${order.client.phone}`}
         onClick={(e) => e.stopPropagation()}
