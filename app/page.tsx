@@ -1,8 +1,16 @@
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { ClipboardList, Clock, Wallet, Users } from "lucide-react";
 import { OrderStatus } from "@prisma/client";
-import { ShoppingCart, Clock, Users, ClipboardList } from "lucide-react";
-import { calcOrderTotal } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
+import { calcOrderTotal, calcIdleDays } from "@/lib/utils";
+import { IDLE_THRESHOLD_DAYS, POSTPONED_REMINDER_DAYS } from "@/lib/constants";
+import { Greeting } from "@/components/dashboard/Greeting";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { IdleCarsList } from "@/components/dashboard/IdleCarsList";
+import { STOPSection } from "@/components/dashboard/STOPSection";
+import { DebtorsList } from "@/components/dashboard/DebtorsList";
+import { PostponedReminders } from "@/components/dashboard/PostponedReminders";
+import { ShoppingNeededWidget } from "@/components/dashboard/ShoppingNeededWidget";
+import { RecentClosedOrders } from "@/components/dashboard/RecentClosedOrders";
 
 export const dynamic = "force-dynamic";
 
@@ -14,127 +22,204 @@ function n(v: unknown): number {
 }
 
 export default async function HomePage() {
-  const [shoppingNeeded, backlogCount, activeOrders, totalClients] =
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const postponedCutoff = new Date(
+    now.getTime() - POSTPONED_REMINDER_DAYS * 24 * 60 * 60 * 1000
+  );
+
+  const [nonClosed, shopping, recentClosed, backlogCount, clientCount] =
     await Promise.all([
-      prisma.shoppingListItem.count({ where: { isNeeded: true } }),
-      prisma.order.count({
-        where: { status: OrderStatus.QUEUE, advancePayment: { gt: 0 } },
+      prisma.order.findMany({
+        where: { status: { not: OrderStatus.CLOSED } },
+        include: {
+          client: { select: { name: true, phone: true } },
+          vehicle: { select: { plateNumber: true, make: true, model: true } },
+          works: { select: { price: true } },
+          parts: { select: { estimatedPrice: true, actualPrice: true } },
+        },
+      }),
+      prisma.shoppingListItem.findMany({
+        where: { isNeeded: true },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
       }),
       prisma.order.findMany({
         where: {
-          status: {
-            notIn: [OrderStatus.CLOSED, OrderStatus.POSTPONED, OrderStatus.QUEUE],
-          },
+          status: OrderStatus.CLOSED,
+          updatedAt: { gte: sevenDaysAgo },
         },
-        include: { works: true, parts: true },
+        include: {
+          client: { select: { name: true } },
+          vehicle: { select: { plateNumber: true, make: true, model: true } },
+          works: { select: { price: true } },
+          parts: { select: { estimatedPrice: true, actualPrice: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+      }),
+      prisma.order.count({
+        where: { status: OrderStatus.QUEUE, advancePayment: { gt: 0 } },
       }),
       prisma.client.count(),
     ]);
 
-  const inWorkCount = activeOrders.length;
-  const totalDebt = activeOrders.reduce((sum, o) => {
-    const total = calcOrderTotal(o.works, o.parts);
-    const paid = n(o.totalPaid) + n(o.advancePayment);
-    const d = total - paid;
-    return sum + (d > 0.01 ? d : 0);
-  }, 0);
+  // Derived collections
+  const activeOrders = nonClosed.filter(
+    (o) =>
+      o.status !== OrderStatus.POSTPONED && o.status !== OrderStatus.QUEUE
+  );
+  const doneOrders = nonClosed.filter((o) => o.status === OrderStatus.DONE);
+  const stopOrders = nonClosed.filter(
+    (o) =>
+      o.status === OrderStatus.STOP_PARTS || o.status === OrderStatus.STOP_PAINT
+  );
+  const postponedOld = nonClosed.filter(
+    (o) =>
+      o.status === OrderStatus.POSTPONED &&
+      new Date(o.createdAt ?? now) < postponedCutoff
+  );
 
-  const widgets = [
-    {
-      href: "/orders",
-      icon: ClipboardList,
-      label: "В роботі",
-      value: inWorkCount,
-      sub: "активних замовлень",
-      color: "bg-blue-50 text-blue-800",
-    },
-    {
-      href: "/backlog",
-      icon: Clock,
-      label: "Черга",
-      value: backlogCount,
-      sub: "очікують виклику",
-      color: backlogCount > 0 ? "bg-amber-50 text-amber-800" : "bg-muted text-muted-foreground",
-    },
-    {
-      href: "/shopping",
-      icon: ShoppingCart,
-      label: "Закупки",
-      value: shoppingNeeded,
-      sub: shoppingNeeded > 0 ? "треба купити" : "все є в наявності",
-      color: shoppingNeeded > 0 ? "bg-orange-50 text-orange-800" : "bg-muted text-muted-foreground",
-    },
-    {
-      href: "/clients",
-      icon: Users,
-      label: "Клієнти",
-      value: totalClients,
-      sub: "в базі",
-      color: "bg-muted text-muted-foreground",
-    },
-  ];
+  // Idle cars: DONE + calcIdleDays >= threshold
+  const idleCars = doneOrders
+    .map((o) => ({ ...o, idleDays: calcIdleDays(o.readyDate) }))
+    .filter((o) => o.idleDays >= IDLE_THRESHOLD_DAYS)
+    .sort((a, b) => b.idleDays - a.idleDays);
+
+  // Debt
+  const debtors = nonClosed
+    .filter((o) => o.status !== OrderStatus.POSTPONED)
+    .map((o) => {
+      const total = calcOrderTotal(
+        o.works.map((w) => ({ price: n(w.price) })),
+        o.parts.map((p) => ({
+          estimatedPrice: n(p.estimatedPrice),
+          actualPrice: p.actualPrice != null ? n(p.actualPrice) : null,
+        }))
+      );
+      const debt = total - n(o.totalPaid) - n(o.advancePayment);
+      return { orderId: o.id, debt, client: o.client, vehicle: o.vehicle };
+    })
+    .filter((d) => d.debt > 0.01)
+    .sort((a, b) => b.debt - a.debt);
+
+  const totalDebt = debtors.reduce((s, d) => s + d.debt, 0);
+
+  // Week revenue
+  const weekRevenue = recentClosed.reduce(
+    (sum, o) =>
+      sum +
+      calcOrderTotal(
+        o.works.map((w) => ({ price: n(w.price) })),
+        o.parts.map((p) => ({
+          estimatedPrice: n(p.estimatedPrice),
+          actualPrice: p.actualPrice != null ? n(p.actualPrice) : null,
+        }))
+      ),
+    0
+  );
+
+  // Postponed reminders with daysSince
+  const postponedReminders = postponedOld.map((o) => ({
+    id: o.id,
+    daysSince: Math.floor(
+      (now.getTime() - new Date(o.createdAt ?? now).getTime()) /
+        (1000 * 60 * 60 * 24)
+    ),
+    client: o.client,
+    vehicle: o.vehicle,
+  }));
+
+  const shoppingNeededCount = await prisma.shoppingListItem.count({
+    where: { isNeeded: true },
+  });
+
+  const urgentCount =
+    idleCars.length +
+    stopOrders.length +
+    debtors.length +
+    postponedReminders.length;
 
   return (
     <div className="flex min-h-full flex-col">
       <header className="border-b px-4 py-3">
-        <h1 className="text-lg font-semibold">🔧 АвтоСервіс CRM</h1>
+        <Greeting />
       </header>
 
-      <div className="flex flex-col gap-4 p-4 pb-10">
-        {/* Quick stats grid */}
+      <div className="flex flex-col gap-5 p-4 pb-10">
+        {/* ── Stat cards ─────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3">
-          {widgets.map(({ href, icon: Icon, label, value, sub, color }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex flex-col gap-2 rounded-xl p-4 transition-opacity hover:opacity-80 ${color}`}
-            >
-              <div className="flex items-center gap-1.5 opacity-80">
-                <Icon className="size-4 shrink-0" />
-                <span className="text-xs font-medium">{label}</span>
-              </div>
-              <p className="text-2xl font-bold leading-none">{value}</p>
-              <p className="text-[11px] opacity-60">{sub}</p>
-            </Link>
-          ))}
+          <StatCard
+            href="/orders"
+            icon={ClipboardList}
+            value={activeOrders.length}
+            label="В роботі"
+            sub="активних замовлень"
+            variant={activeOrders.length > 0 ? "info" : "default"}
+          />
+          <StatCard
+            href="/orders"
+            icon={ClipboardList}
+            value={doneOrders.length}
+            label="Готові до видачі"
+            sub="DONE"
+            variant={doneOrders.length > 0 ? "success" : "default"}
+          />
+          <StatCard
+            href="/backlog"
+            icon={Clock}
+            value={backlogCount}
+            label="В черзі"
+            sub="очікують виклику"
+            variant={backlogCount > 0 ? "warning" : "default"}
+          />
+          <StatCard
+            href="/finance"
+            icon={Wallet}
+            value={debtors.length > 0 ? `${debtors.length}` : "0"}
+            label="Боржників"
+            sub={debtors.length > 0 ? `${Math.round(totalDebt).toLocaleString("uk-UA")} ₴` : "все оплачено"}
+            variant={debtors.length > 0 ? "danger" : "default"}
+          />
         </div>
 
-        {/* Debt summary */}
-        {totalDebt > 0.01 && (
-          <Link
-            href="/finance"
-            className="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 hover:bg-red-100"
-          >
-            <div>
-              <p className="text-sm font-semibold text-red-800">Загальний борг клієнтів</p>
-              <p className="text-xs text-red-600">по активних замовленнях</p>
-            </div>
-            <p className="text-lg font-bold text-red-700">
-              {new Intl.NumberFormat("uk-UA", {
-                style: "currency",
-                currency: "UAH",
-                minimumFractionDigits: 0,
-              }).format(totalDebt)}
-            </p>
-          </Link>
+        {/* ── Urgent section ──────────────────────────────────── */}
+        {urgentCount === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-6 text-center">
+            <p className="text-2xl">✅</p>
+            <p className="font-semibold text-green-800">Все під контролем!</p>
+            <p className="text-sm text-green-600">Немає термінових питань</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+            <p className="text-sm font-bold text-amber-900">⚠️ Потребує уваги</p>
+            <IdleCarsList cars={idleCars} />
+            <STOPSection orders={stopOrders} />
+            <DebtorsList debtors={debtors} totalDebt={totalDebt} />
+            <PostponedReminders orders={postponedReminders} />
+          </div>
         )}
 
-        {/* Shopping reminder */}
-        {shoppingNeeded > 0 && (
-          <Link
-            href="/shopping"
-            className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 hover:bg-orange-100"
-          >
-            <ShoppingCart className="size-5 shrink-0 text-orange-600" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-orange-800">
-                Треба купити {shoppingNeeded}{" "}
-                {shoppingNeeded === 1 ? "позицію" : shoppingNeeded < 5 ? "позиції" : "позицій"}
-              </p>
-              <p className="text-xs text-orange-600">Натисни щоб переглянути список</p>
-            </div>
-          </Link>
-        )}
+        {/* ── Shopping widget ─────────────────────────────────── */}
+        <ShoppingNeededWidget
+          items={shopping}
+          totalNeeded={shoppingNeededCount}
+        />
+
+        {/* ── Recent closed ───────────────────────────────────── */}
+        <RecentClosedOrders
+          orders={recentClosed as never}
+          weekRevenue={weekRevenue}
+        />
+
+        {/* ── Clients stat ────────────────────────────────────── */}
+        <StatCard
+          href="/clients"
+          icon={Users}
+          value={clientCount}
+          label="Клієнтів у базі"
+          variant="default"
+        />
       </div>
     </div>
   );
