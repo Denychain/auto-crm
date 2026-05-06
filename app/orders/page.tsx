@@ -3,6 +3,7 @@ import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { KanbanBoard } from "@/components/orders/KanbanBoard";
+import { PlateSearchDialog } from "@/components/orders/PlateSearchDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +26,12 @@ export default async function OrdersPage() {
       {/* Page header */}
       <header className="flex shrink-0 items-center justify-between border-b px-4 py-3">
         <h1 className="text-lg font-semibold">Замовлення</h1>
-        <Button asChild size="sm">
-          <Link href="/orders/new">+ Нове</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <PlateSearchDialog />
+          <Button asChild size="sm">
+            <Link href="/orders/new">+ Нове</Link>
+          </Button>
+        </div>
       </header>
 
       {/* Kanban board takes remaining height */}

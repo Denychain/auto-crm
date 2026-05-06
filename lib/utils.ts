@@ -65,3 +65,9 @@ export function isOverdue(order: {
     calcIdleDays(order.readyDate) > IDLE_THRESHOLD_DAYS
   );
 }
+
+export function formatPlate(plate: string): string {
+  const n = plate.replace(/\s+/g, "").toUpperCase();
+  const m = n.match(/^([A-Z]{2})(\d{3,4})([A-Z]{2})$/);
+  return m ? `${m[1]} ${m[2]} ${m[3]}` : n;
+}
