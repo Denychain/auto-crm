@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+/* Safe area insets for iOS notch / home indicator */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
