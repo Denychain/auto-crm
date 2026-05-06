@@ -4,6 +4,8 @@ import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { SideNav } from "@/components/layout/SideNav";
 import { Toaster } from "@/components/ui/sonner";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -11,13 +13,31 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "АвтоСервіс CRM",
+  title: {
+    default: "АвтоCRM",
+    template: "%s · АвтоCRM",
+  },
   description: "CRM-система для автосервісу — фарбування та рихтування",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "АвтоCRM",
+  },
+  openGraph: {
+    type: "website",
+    title: "АвтоСервіс CRM",
+    description: "CRM-система для автосервісу — фарбування та рихтування",
+    siteName: "АвтоCRM",
+  },
+  twitter: {
+    card: "summary",
+    title: "АвтоСервіс CRM",
+    description: "CRM-система для автосервісу",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
 };
 
@@ -37,19 +57,18 @@ export default function RootLayout({
   return (
     <html lang="uk" className={`${inter.variable} h-full antialiased`}>
       <body className="h-full bg-background text-foreground">
-        <div className="flex h-full">
-          {/* Desktop sidebar — hidden on mobile */}
-          <SideNav className="hidden md:flex" />
+        <OfflineBanner />
 
-          {/* Main content */}
+        <div className="flex h-full">
+          <SideNav className="hidden md:flex" />
           <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
             {children}
           </main>
         </div>
 
-        {/* Mobile bottom nav — hidden on desktop */}
         <BottomNav className="md:hidden" />
         <Toaster />
+        <InstallPrompt />
       </body>
     </html>
   );
