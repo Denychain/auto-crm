@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDateRangeForPeriod, aggregateFinanceData } from "@/lib/finance";
 import { Currency } from "@prisma/client";
+import { deepSerialize } from "@/lib/serialize";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
 import { FinanceSummaryCards } from "@/components/finance/FinanceSummaryCards";
 import { DreamFundWidget } from "@/components/finance/DreamFundWidget";
@@ -49,7 +50,7 @@ export default async function FinancePage({
       <div className="flex flex-col gap-6 p-4 pb-10">
         <PeriodSelector current={period} from={sp.from} to={sp.to} />
         <FinanceSummaryCards data={data} periodLabel={periodLabel} displayCurrency={displayCurrency} />
-        <DreamFundWidget funds={funds as never} />
+        <DreamFundWidget funds={deepSerialize(funds) as never} />
         <RevenueBreakdown
           revenue={data.revenue}
           materials={data.materials}

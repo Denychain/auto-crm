@@ -3,7 +3,7 @@ import { OrderStatus, Currency } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { calcOrderTotal, calcIdleDays } from "@/lib/utils";
 import { IDLE_THRESHOLD_DAYS, POSTPONED_REMINDER_DAYS } from "@/lib/constants";
-import { serializeOrder } from "@/lib/serialize";
+import { deepSerialize } from "@/lib/serialize";
 import { Greeting } from "@/components/dashboard/Greeting";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { IdleCarsList } from "@/components/dashboard/IdleCarsList";
@@ -67,18 +67,20 @@ export default async function HomePage() {
     ]);
 
   const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
+  const nonClosedS = deepSerialize(nonClosed);
+  const recentClosedS = deepSerialize(recentClosed);
 
-  // Derived collections
-  const activeOrders = nonClosed.filter(
+  // Derived collections (use serialized arrays — all Decimal already converted to number)
+  const activeOrders = nonClosedS.filter(
     (o) =>
       o.status !== OrderStatus.POSTPONED && o.status !== OrderStatus.QUEUE
   );
-  const doneOrders = nonClosed.filter((o) => o.status === OrderStatus.DONE);
-  const stopOrders = nonClosed.filter(
+  const doneOrders = nonClosedS.filter((o) => o.status === OrderStatus.DONE);
+  const stopOrders = nonClosedS.filter(
     (o) =>
       o.status === OrderStatus.STOP_PARTS || o.status === OrderStatus.STOP_PAINT
   );
-  const postponedOld = nonClosed.filter(
+  const postponedOld = nonClosedS.filter(
     (o) =>
       o.status === OrderStatus.POSTPONED &&
       new Date(o.createdAt ?? now) < postponedCutoff
@@ -91,7 +93,7 @@ export default async function HomePage() {
     .sort((a, b) => b.idleDays - a.idleDays);
 
   // Debt
-  const debtors = nonClosed
+  const debtors = nonClosedS
     .filter((o) => o.status !== OrderStatus.POSTPONED)
     .map((o) => {
       const total = calcOrderTotal(
@@ -110,7 +112,7 @@ export default async function HomePage() {
   const totalDebt = debtors.reduce((s, d) => s + d.debt, 0);
 
   // Week revenue
-  const weekRevenue = recentClosed.reduce(
+  const weekRevenue = recentClosedS.reduce(
     (sum, o) =>
       sum +
       calcOrderTotal(
@@ -212,7 +214,7 @@ export default async function HomePage() {
 
         {/* ── Recent closed ───────────────────────────────────── */}
         <RecentClosedOrders
-          orders={recentClosed.map(serializeOrder) as never}
+          orders={recentClosedS as never}
           weekRevenue={weekRevenue}
           displayCurrency={displayCurrency}
         />

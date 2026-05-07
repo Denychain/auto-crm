@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ClientsList } from "@/components/clients/ClientsList";
+import { deepSerialize } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function ClientsPage() {
         <h1 className="text-lg font-semibold">Клієнти</h1>
       </header>
       <div className="p-4">
-        <ClientsList clients={clients as never} />
+        <ClientsList clients={deepSerialize(clients) as never} />
       </div>
     </div>
   );

@@ -1,60 +1,30 @@
-type DecimalLike = { toNumber(): number } | null | undefined;
-
-function d(v: DecimalLike): number | null {
-  if (v == null) return null;
-  return typeof v === "object" && "toNumber" in v ? v.toNumber() : Number(v);
+function isDecimal(v: unknown): v is { toNumber(): number } {
+  return (
+    v !== null &&
+    typeof v === "object" &&
+    "toNumber" in (v as object) &&
+    typeof (v as { toNumber: unknown }).toNumber === "function"
+  );
 }
 
-function dn(v: DecimalLike): number {
-  return d(v) ?? 0;
+/** Recursively converts all Prisma Decimal instances to plain numbers. */
+export function deepSerialize<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  if (isDecimal(value)) return value.toNumber() as unknown as T;
+  if (value instanceof Date) return value;
+  if (Array.isArray(value)) return value.map(deepSerialize) as unknown as T;
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [
+        k,
+        deepSerialize(v),
+      ])
+    ) as unknown as T;
+  }
+  return value;
 }
 
-export function serializeOrder<
-  T extends {
-    estimatedPrice: DecimalLike;
-    advancePayment: DecimalLike;
-    totalPaid: DecimalLike;
-    baseExchangeRate?: DecimalLike;
-    works?: Array<{
-      price: DecimalLike;
-      exchangeRate?: DecimalLike;
-      [key: string]: unknown;
-    }>;
-    parts?: Array<{
-      estimatedPrice: DecimalLike;
-      actualPrice?: DecimalLike;
-      exchangeRate?: DecimalLike;
-      [key: string]: unknown;
-    }>;
-    workerShares?: Array<{
-      amount: DecimalLike;
-      exchangeRate?: DecimalLike;
-      [key: string]: unknown;
-    }>;
-    [key: string]: unknown;
-  },
->(order: T) {
-  return {
-    ...order,
-    estimatedPrice: dn(order.estimatedPrice),
-    advancePayment: dn(order.advancePayment),
-    totalPaid: dn(order.totalPaid),
-    baseExchangeRate: d(order.baseExchangeRate),
-    works: order.works?.map((w) => ({
-      ...w,
-      price: dn(w.price),
-      exchangeRate: d(w.exchangeRate),
-    })),
-    parts: order.parts?.map((p) => ({
-      ...p,
-      estimatedPrice: dn(p.estimatedPrice),
-      actualPrice: d(p.actualPrice),
-      exchangeRate: d(p.exchangeRate),
-    })),
-    workerShares: order.workerShares?.map((ws) => ({
-      ...ws,
-      amount: dn(ws.amount),
-      exchangeRate: d(ws.exchangeRate),
-    })),
-  };
+/** Convenience alias for a single order object. */
+export function serializeOrder<T extends object>(order: T): T {
+  return deepSerialize(order);
 }
