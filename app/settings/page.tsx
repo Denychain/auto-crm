@@ -22,6 +22,11 @@ export default async function SettingsPage() {
   const defaultCurrency = (settings?.defaultCurrency ?? Currency.UAH) as Currency;
   const autoUpdateRate = settings?.autoUpdateRate ?? true;
 
+  const rateHistorySerialized = rateHistory.map((r) => ({
+    ...r,
+    usdToUah: Number(r.usdToUah),
+  }));
+
   return (
     <div className="flex min-h-full flex-col">
       <header className="border-b px-4 py-3">
@@ -30,7 +35,7 @@ export default async function SettingsPage() {
             <Settings className="size-5 text-muted-foreground" />
             <h1 className="text-lg font-semibold">Налаштування</h1>
           </div>
-          <CurrencyToggle rateHistory={rateHistory as never} />
+          <CurrencyToggle rateHistory={rateHistorySerialized as never} />
         </div>
       </header>
 
@@ -40,7 +45,7 @@ export default async function SettingsPage() {
           defaultCurrency={defaultCurrency}
           autoUpdateRate={autoUpdateRate}
           currentRate={rate}
-          rateHistory={rateHistory as never}
+          rateHistory={rateHistorySerialized as never}
         />
       </div>
     </div>

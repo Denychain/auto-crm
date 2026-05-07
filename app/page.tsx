@@ -3,6 +3,7 @@ import { OrderStatus, Currency } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { calcOrderTotal, calcIdleDays } from "@/lib/utils";
 import { IDLE_THRESHOLD_DAYS, POSTPONED_REMINDER_DAYS } from "@/lib/constants";
+import { serializeOrder } from "@/lib/serialize";
 import { Greeting } from "@/components/dashboard/Greeting";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { IdleCarsList } from "@/components/dashboard/IdleCarsList";
@@ -211,7 +212,7 @@ export default async function HomePage() {
 
         {/* ── Recent closed ───────────────────────────────────── */}
         <RecentClosedOrders
-          orders={recentClosed as never}
+          orders={recentClosed.map(serializeOrder) as never}
           weekRevenue={weekRevenue}
           displayCurrency={displayCurrency}
         />

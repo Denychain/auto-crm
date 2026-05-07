@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { ClientProfile } from "@/components/clients/ClientProfile";
+import { serializeOrder } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export default async function ClientDetailPage({
         phone={client.phone}
         note={client.note}
         vehicles={client.vehicles}
-        orders={client.orders as never}
+        orders={client.orders.map(serializeOrder) as never}
       />
     </div>
   );

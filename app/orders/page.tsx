@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { KanbanBoard } from "@/components/orders/KanbanBoard";
 import { PlateSearchDialog } from "@/components/orders/PlateSearchDialog";
+import { serializeOrder } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function OrdersPage() {
   );
   const postponed = raw.filter((o) => o.status === OrderStatus.POSTPONED);
   const closed = raw.filter((o) => o.status === OrderStatus.CLOSED);
-  const orders = [...active, ...postponed, ...closed];
+  const orders = [...active, ...postponed, ...closed].map(serializeOrder);
 
   return (
     <div className="flex h-full flex-col">

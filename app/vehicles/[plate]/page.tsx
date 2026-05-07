@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { VehicleHistory } from "@/components/clients/VehicleHistory";
 import { formatPlate } from "@/lib/utils";
+import { serializeOrder } from "@/lib/serialize";
 import { Currency } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -83,7 +84,7 @@ export default async function VehiclePage({
         </div>
 
         {/* Timeline */}
-        <VehicleHistory orders={vehicle.orders as never} displayCurrency={displayCurrency} />
+        <VehicleHistory orders={vehicle.orders.map(serializeOrder) as never} displayCurrency={displayCurrency} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { serializeOrder } from "@/lib/serialize";
 import { OrderHeader } from "@/components/orders/OrderDetail/OrderHeader";
 import { VehicleClientInfo } from "@/components/orders/OrderDetail/VehicleClientInfo";
 import { WorksConstructor } from "@/components/orders/OrderDetail/WorksConstructor";
@@ -32,27 +33,29 @@ export default async function OrderDetailPage({
 
   if (!order) notFound();
 
+  const o = serializeOrder(order);
+
   return (
     <div className="flex min-h-full flex-col">
-      <OrderHeader order={order} />
+      <OrderHeader order={o as never} />
 
       <div className="flex flex-col gap-4 p-4 pb-10">
-        <VehicleClientInfo order={order} />
-        <WorksConstructor orderId={order.id} initialWorks={order.works} />
-        <PartsChecklist orderId={order.id} initialParts={order.parts} />
-        <FinanceBlock order={order} />
+        <VehicleClientInfo order={o as never} />
+        <WorksConstructor orderId={o.id} initialWorks={o.works as never} />
+        <PartsChecklist orderId={o.id} initialParts={o.parts as never} />
+        <FinanceBlock order={o as never} />
         <WorkerShares
-          orderId={order.id}
-          initialShares={order.workerShares}
-          order={order}
+          orderId={o.id}
+          initialShares={o.workerShares as never}
+          order={o as never}
         />
         <ProcessPhotos
-          orderId={order.id}
+          orderId={o.id}
           initialPhotos={order.photos}
-          clientPhone={order.client.phone}
-          clientName={order.client.name}
+          clientPhone={o.client.phone}
+          clientName={o.client.name}
         />
-        <OrderActions orderId={order.id} status={order.status} />
+        <OrderActions orderId={o.id} status={o.status} />
       </div>
     </div>
   );
