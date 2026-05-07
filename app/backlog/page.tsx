@@ -1,7 +1,8 @@
 import { Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { Currency } from "@prisma/client";
 import { BacklogRow } from "@/components/backlog/BacklogRow";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,9 @@ function n(v: unknown): number {
 }
 
 export default async function BacklogPage() {
+  const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
+  const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
+
   const orders = await prisma.order.findMany({
     where: {
       status: OrderStatus.QUEUE,
@@ -45,7 +49,7 @@ export default async function BacklogPage() {
             <span>
               Завдатків:{" "}
               <span className="font-semibold text-green-700">
-                {formatMoney(totalAdvance)}
+                {formatMoney(totalAdvance, displayCurrency)}
               </span>
             </span>
           )}

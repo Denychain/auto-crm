@@ -12,7 +12,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import {
   createDreamFund,
   updateDreamFund,
@@ -46,6 +47,7 @@ function ProgressBar({ percent }: { percent: number }) {
 }
 
 function FundCard({ fund }: { fund: DreamFund }) {
+  const { displayCurrency } = useCurrency();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(fund.goalName);
   const [target, setTarget] = useState(String(n(fund.targetAmount)));
@@ -149,11 +151,11 @@ function FundCard({ fund }: { fund: DreamFund }) {
       <div className="mt-3 flex flex-col gap-1.5">
         <ProgressBar percent={percent} />
         <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">{formatMoney(current)}</span>
+          <span className="text-muted-foreground">{formatMoney(current, displayCurrency)}</span>
           <span className={`font-semibold ${done ? "text-green-700" : "text-muted-foreground"}`}>
             {done ? "🎉 Досягнуто!" : `${Math.round(percent)}%`}
           </span>
-          <span className="text-muted-foreground">{formatMoney(goal)}</span>
+          <span className="text-muted-foreground">{formatMoney(goal, displayCurrency)}</span>
         </div>
       </div>
 

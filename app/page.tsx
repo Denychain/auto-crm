@@ -1,5 +1,5 @@
 import { ClipboardList, Clock, Wallet, Users } from "lucide-react";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Currency } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { calcOrderTotal, calcIdleDays } from "@/lib/utils";
 import { IDLE_THRESHOLD_DAYS, POSTPONED_REMINDER_DAYS } from "@/lib/constants";
@@ -28,7 +28,7 @@ export default async function HomePage() {
     now.getTime() - POSTPONED_REMINDER_DAYS * 24 * 60 * 60 * 1000
   );
 
-  const [nonClosed, shopping, recentClosed, backlogCount, clientCount] =
+  const [nonClosed, shopping, recentClosed, backlogCount, clientCount, settings] =
     await Promise.all([
       prisma.order.findMany({
         where: { status: { not: OrderStatus.CLOSED } },
@@ -62,7 +62,10 @@ export default async function HomePage() {
         where: { status: OrderStatus.QUEUE, advancePayment: { gt: 0 } },
       }),
       prisma.client.count(),
+      prisma.settings.findUnique({ where: { id: "singleton" } }),
     ]);
+
+  const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
 
   // Derived collections
   const activeOrders = nonClosed.filter(
@@ -195,7 +198,7 @@ export default async function HomePage() {
             <p className="text-sm font-bold text-amber-900">⚠️ Потребує уваги</p>
             <IdleCarsList cars={idleCars} />
             <STOPSection orders={stopOrders} />
-            <DebtorsList debtors={debtors} totalDebt={totalDebt} />
+            <DebtorsList debtors={debtors} totalDebt={totalDebt} displayCurrency={displayCurrency} />
             <PostponedReminders orders={postponedReminders} />
           </div>
         )}
@@ -210,6 +213,7 @@ export default async function HomePage() {
         <RecentClosedOrders
           orders={recentClosed as never}
           weekRevenue={weekRevenue}
+          displayCurrency={displayCurrency}
         />
 
         {/* ── Clients stat ────────────────────────────────────── */}

@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { formatMoney, calcOrderTotal, cn } from "@/lib/utils";
+import { calcOrderTotal, cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import {
   addWorkerShare,
   updateWorkerShare,
@@ -146,6 +148,7 @@ export function WorkerShares({
 }: WorkerSharesProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { displayCurrency } = useCurrency();
 
   const orderTotal = calcOrderTotal(order.works, order.parts);
   const partsTotal = order.parts.reduce(
@@ -200,11 +203,11 @@ export function WorkerShares({
         <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs">
           <div className="flex justify-between text-muted-foreground">
             <span>Сума на матеріали</span>
-            <span>{formatMoney(partsTotal)}</span>
+            <span>{formatMoney(partsTotal, displayCurrency)}</span>
           </div>
           <div className="flex justify-between font-medium">
             <span>Залишок на роботу</span>
-            <span>{formatMoney(remainderForWork)}</span>
+            <span>{formatMoney(remainderForWork, displayCurrency)}</span>
           </div>
         </div>
 
@@ -259,7 +262,7 @@ export function WorkerShares({
                 Розподілено
               </span>
               <span>
-                {formatMoney(distributed)} / {formatMoney(orderTotal)}
+                {formatMoney(distributed, displayCurrency)} / {formatMoney(orderTotal, displayCurrency)}
               </span>
             </div>
           </>

@@ -3,11 +3,14 @@
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Plus, Loader2 } from "lucide-react";
-import type { OrderWork } from "@prisma/client";
+import { Currency, type OrderWork } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { formatMoney, cn } from "@/lib/utils";
+import { MoneyInput } from "@/components/ui/MoneyInput";
+import { formatMoney, convert } from "@/lib/currency";
+import { cn } from "@/lib/utils";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { addWork, updateWork, deleteWork } from "@/app/orders/[id]/actions";
 
 // ── Row for an existing work item ─────────────────────────────────────────────
@@ -17,14 +20,20 @@ function WorkRow({
   onDelete,
   onUpdate,
   disabled,
+  displayCurrency,
+  rate,
 }: {
   work: OrderWork;
   onDelete: (id: string) => void;
-  onUpdate: (id: string, name: string, price: number) => void;
+  onUpdate: (id: string, name: string, price: number, currency: Currency) => void;
   disabled: boolean;
+  displayCurrency: Currency;
+  rate: number | null;
 }) {
+  const workCurrency = ((work as { currency?: string }).currency ?? "UAH") as Currency;
   const [name, setName] = useState(work.name);
-  const [price, setPrice] = useState(Number(work.price).toFixed(2));
+  const [price, setPrice] = useState(Number(work.price));
+  const [currency, setCurrency] = useState<Currency>(workCurrency);
   const dirty = useRef(false);
 
   function markDirty() {
@@ -34,8 +43,10 @@ function WorkRow({
   function handleBlur() {
     if (!dirty.current) return;
     dirty.current = false;
-    onUpdate(work.id, name.trim() || work.name, parseFloat(price) || 0);
+    onUpdate(work.id, name.trim() || work.name, price, currency);
   }
+
+  const displayPrice = convert({ amount: price, currency }, displayCurrency, rate ?? undefined);
 
   return (
     <div className="flex items-center gap-2">
@@ -50,22 +61,28 @@ function WorkRow({
         placeholder="Назва роботи"
         className="flex-1 text-sm"
       />
-      <Input
-        type="number"
-        min="0"
-        step="0.01"
+      <MoneyInput
         value={price}
-        onChange={(e) => {
-          setPrice(e.target.value);
+        currency={currency}
+        currentRate={rate ?? undefined}
+        onChange={(v, c) => {
+          setPrice(v);
+          setCurrency(c);
           markDirty();
         }}
-        onBlur={handleBlur}
         disabled={disabled}
-        className="w-24 text-right text-sm"
-        placeholder="0.00"
+        className="w-36"
       />
+      {currency !== displayCurrency && (
+        <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          ≈{formatMoney(displayPrice, displayCurrency)}
+        </span>
+      )}
       <button
-        onClick={() => onDelete(work.id)}
+        onClick={() => {
+          dirty.current = false;
+          onDelete(work.id);
+        }}
         disabled={disabled}
         className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
         aria-label="Видалити"
@@ -81,19 +98,25 @@ function WorkRow({
 function AddWorkForm({
   onAdd,
   disabled,
+  defaultCurrency,
+  rate,
 }: {
-  onAdd: (name: string, price: number) => void;
+  onAdd: (name: string, price: number, currency: Currency) => void;
   disabled: boolean;
+  defaultCurrency: Currency;
+  rate: number | null;
 }) {
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(0);
+  const [currency, setCurrency] = useState<Currency>(defaultCurrency);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    onAdd(name.trim(), parseFloat(price) || 0);
+    onAdd(name.trim(), price, currency);
     setName("");
-    setPrice("");
+    setPrice(0);
+    setCurrency(defaultCurrency);
   }
 
   return (
@@ -105,15 +128,16 @@ function AddWorkForm({
         placeholder="Нова робота..."
         className="flex-1 text-sm"
       />
-      <Input
-        type="number"
-        min="0"
-        step="0.01"
+      <MoneyInput
         value={price}
-        onChange={(e) => setPrice(e.target.value)}
+        currency={currency}
+        currentRate={rate ?? undefined}
+        onChange={(v, c) => {
+          setPrice(v);
+          setCurrency(c);
+        }}
         disabled={disabled}
-        placeholder="₴"
-        className="w-24 text-right text-sm"
+        className="w-36"
       />
       <Button
         type="submit"
@@ -147,12 +171,16 @@ interface WorksConstructorProps {
 export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { displayCurrency, rate } = useCurrency();
 
-  const total = initialWorks.reduce((sum, w) => sum + Number(w.price), 0);
+  const total = initialWorks.reduce((sum, w) => {
+    const wc = ((w as { currency?: string }).currency ?? "UAH") as Currency;
+    return sum + convert({ amount: Number(w.price), currency: wc }, displayCurrency, rate ?? undefined);
+  }, 0);
 
-  function handleAdd(name: string, price: number) {
+  function handleAdd(name: string, price: number, currency: Currency) {
     startTransition(async () => {
-      await addWork(orderId, { name, price });
+      await addWork(orderId, { name, price, currency });
       router.refresh();
     });
   }
@@ -164,9 +192,9 @@ export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProp
     });
   }
 
-  function handleUpdate(workId: string, name: string, price: number) {
+  function handleUpdate(workId: string, name: string, price: number, currency: Currency) {
     startTransition(async () => {
-      await updateWork(workId, orderId, { name, price });
+      await updateWork(workId, orderId, { name, price, currency });
     });
   }
 
@@ -177,7 +205,7 @@ export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProp
           <CardTitle className="text-base">Роботи</CardTitle>
           <div className="flex items-center gap-2">
             {isPending && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
-            <span className="text-sm font-semibold">{formatMoney(total)}</span>
+            <span className="text-sm font-semibold">{formatMoney(total, displayCurrency)}</span>
           </div>
         </div>
       </CardHeader>
@@ -187,7 +215,7 @@ export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProp
           {WORK_CHIPS.map((chip) => (
             <button
               key={chip}
-              onClick={() => handleAdd(chip, 0)}
+              onClick={() => handleAdd(chip, 0, displayCurrency)}
               disabled={isPending}
               className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground disabled:opacity-40"
             >
@@ -208,10 +236,12 @@ export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProp
             onDelete={handleDelete}
             onUpdate={handleUpdate}
             disabled={isPending}
+            displayCurrency={displayCurrency}
+            rate={rate}
           />
         ))}
         <div className={cn("border-t pt-2", initialWorks.length === 0 && "border-t-0 pt-0")}>
-          <AddWorkForm onAdd={handleAdd} disabled={isPending} />
+          <AddWorkForm onAdd={handleAdd} disabled={isPending} defaultCurrency={displayCurrency} rate={rate} />
         </div>
       </CardContent>
     </Card>

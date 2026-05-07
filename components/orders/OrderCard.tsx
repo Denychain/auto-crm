@@ -5,7 +5,9 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Phone, GripVertical, AlertTriangle, Clock } from "lucide-react";
 import type { OrderWithRelations } from "@/types/orders";
-import { calcDebt, calcIdleDays, isOverdue, formatMoney, cn } from "@/lib/utils";
+import { calcDebt, calcIdleDays, isOverdue, cn } from "@/lib/utils";
+import { formatMoney, convert } from "@/lib/currency";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface OrderCardProps {
   order: OrderWithRelations;
@@ -25,7 +27,14 @@ export function OrderCard({ order, isPending, isOverlay, isBacklog }: OrderCardP
     ? { transform: CSS.Translate.toString(transform) }
     : undefined;
 
+  const { displayCurrency, rate } = useCurrency();
+  const orderCurrency = (order as { currency?: string }).currency ?? "UAH";
   const debt = calcDebt(order);
+  const debtDisplay = convert(
+    { amount: debt, currency: orderCurrency as import("@prisma/client").Currency },
+    displayCurrency,
+    rate ?? undefined
+  );
   const overdue = isOverdue(order);
   const idleDays = calcIdleDays(order.readyDate);
   const hasDebt = debt > 0.01;
@@ -106,7 +115,7 @@ export function OrderCard({ order, isPending, isOverlay, isBacklog }: OrderCardP
         {/* Debt / paid status */}
         <p className="mt-2 text-xs font-semibold">
           {hasDebt ? (
-            <span className="text-red-600">До оплати: {formatMoney(debt)}</span>
+            <span className="text-red-600">До оплати: {formatMoney(debtDisplay, displayCurrency)}</span>
           ) : (
             <span className="text-green-600">Сплачено повністю ✓</span>
           )}

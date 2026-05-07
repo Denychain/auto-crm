@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Phone } from "lucide-react";
-import { formatMoney, formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { Currency } from "@prisma/client";
 import { OrderStatus } from "@prisma/client";
 
 interface Vehicle {
@@ -85,7 +87,7 @@ export function ClientCard({ id, name, phone, vehicles, orders }: ClientCardProp
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">Замовлень: {orders.length}</span>
         {totalDebt > 0.01 && (
-          <span className="font-semibold text-red-600">Борг: {formatMoney(totalDebt)}</span>
+          <span className="font-semibold text-red-600">Борг: {formatMoney(totalDebt, Currency.UAH)}</span>
         )}
       </div>
     </Link>

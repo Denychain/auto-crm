@@ -1,13 +1,15 @@
 import { TrendingUp, Package, Wallet, AlertCircle } from "lucide-react";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { Currency } from "@prisma/client";
 import type { FinanceAggregation } from "@/lib/finance";
 
 interface FinanceSummaryCardsProps {
   data: FinanceAggregation;
   periodLabel: string;
+  displayCurrency?: Currency;
 }
 
-export function FinanceSummaryCards({ data, periodLabel }: FinanceSummaryCardsProps) {
+export function FinanceSummaryCards({ data, periodLabel, displayCurrency = Currency.UAH }: FinanceSummaryCardsProps) {
   const cards = [
     {
       icon: TrendingUp,
@@ -47,7 +49,7 @@ export function FinanceSummaryCards({ data, periodLabel }: FinanceSummaryCardsPr
             <Icon className="size-3.5 shrink-0" />
             <span className="text-xs font-medium leading-tight">{label}</span>
           </div>
-          <p className="text-lg font-bold leading-none">{formatMoney(value)}</p>
+          <p className="text-lg font-bold leading-none">{formatMoney(value, displayCurrency)}</p>
           <p className="text-[10px] opacity-50">за {periodLabel.toLowerCase()}</p>
         </div>
       ))}

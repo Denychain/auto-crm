@@ -1,7 +1,8 @@
 import { prisma } from "./prisma";
 import { calcOrderTotal } from "./utils";
+import { normalizeToUSD } from "./currency";
 import { DREAM_FUND_PERCENT } from "./constants";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Currency } from "@prisma/client";
 import {
   startOfDay,
   endOfDay,
@@ -98,9 +99,32 @@ function toN(v: unknown): number {
 
 // ── Main aggregation ──────────────────────────────────────────────────────────
 
+// Normalize an amount to the display currency using its stored exchange rate
+function toDisplay(
+  amount: unknown,
+  recordCurrency: Currency | string,
+  exchangeRate: unknown,
+  displayCurrency: Currency,
+  fallbackRate: number
+): number {
+  const n = toN(amount);
+  const rate = toN(exchangeRate) || fallbackRate;
+  const src = recordCurrency as Currency;
+
+  if (src === displayCurrency) return n;
+  if (src === Currency.UAH && displayCurrency === Currency.USD) return n / rate;
+  if (src === Currency.USD && displayCurrency === Currency.UAH) return n * rate;
+  return normalizeToUSD(n, src, rate);
+}
+
 export async function aggregateFinanceData(
-  range: { from: Date; to: Date }
+  range: { from: Date; to: Date },
+  displayCurrency: Currency = Currency.UAH
 ): Promise<FinanceAggregation> {
+  // Fetch current fallback rate
+  const latestRate = await prisma.exchangeRate.findFirst({ orderBy: { date: "desc" } });
+  const fallbackRate = toN(latestRate?.usdToUah) || 41;
+
   const [closedOrders, activeOrders] = await Promise.all([
     prisma.order.findMany({
       where: {
@@ -121,31 +145,43 @@ export async function aggregateFinanceData(
     }),
   ]);
 
-  const revenue = closedOrders.reduce(
-    (sum, o) => sum + calcOrderTotal(o.works, o.parts),
-    0
-  );
+  const revenue = closedOrders.reduce((sum, o) => {
+    const orderCurrency = (o as { currency?: Currency }).currency ?? Currency.UAH;
+    const rate = toN((o as { baseExchangeRate?: unknown }).baseExchangeRate) || fallbackRate;
+    const total = calcOrderTotal(o.works, o.parts);
+    return sum + toDisplay(total, orderCurrency, rate, displayCurrency, fallbackRate);
+  }, 0);
 
   const materials = closedOrders.reduce((sum, o) => {
     return (
       sum +
-      o.parts.reduce(
-        (s, p) =>
-          s + (p.actualPrice != null ? toN(p.actualPrice) : toN(p.estimatedPrice)),
-        0
-      )
+      o.parts.reduce((s, p) => {
+        const partCurrency = (p as { currency?: Currency }).currency ?? Currency.UAH;
+        const partRate = toN((p as { exchangeRate?: unknown }).exchangeRate) || fallbackRate;
+        const v = p.actualPrice != null ? toN(p.actualPrice) : toN(p.estimatedPrice);
+        return s + toDisplay(v, partCurrency, partRate, displayCurrency, fallbackRate);
+      }, 0)
     );
   }, 0);
 
   const wages = closedOrders.reduce((sum, o) => {
-    return sum + o.workerShares.reduce((s, ws) => s + toN(ws.amount), 0);
+    return (
+      sum +
+      o.workerShares.reduce((s, ws) => {
+        const wsCurrency = (ws as { currency?: Currency }).currency ?? Currency.UAH;
+        const wsRate = toN((ws as { exchangeRate?: unknown }).exchangeRate) || fallbackRate;
+        return s + toDisplay(toN(ws.amount), wsCurrency, wsRate, displayCurrency, fallbackRate);
+      }, 0)
+    );
   }, 0);
 
   const debt = activeOrders.reduce((sum, o) => {
+    const orderCurrency = (o as { currency?: Currency }).currency ?? Currency.UAH;
+    const rate = toN((o as { baseExchangeRate?: unknown }).baseExchangeRate) || fallbackRate;
     const total = calcOrderTotal(o.works, o.parts);
     const paid = toN(o.totalPaid) + toN(o.advancePayment);
     const d = total - paid;
-    return sum + (d > 0.01 ? d : 0);
+    return sum + (d > 0.01 ? toDisplay(d, orderCurrency, rate, displayCurrency, fallbackRate) : 0);
   }, 0);
 
   const orderPlanFact: OrderPlanFact[] = closedOrders

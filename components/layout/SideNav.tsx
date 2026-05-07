@@ -9,8 +9,10 @@ import {
   Wallet,
   ShoppingCart,
   Clock,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CurrencyToggle } from "@/components/ui/CurrencyToggle";
 
 const NAV_ITEMS = [
   { href: "/", label: "Головна", icon: Home },
@@ -19,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/finance", label: "Фінанси", icon: Wallet },
   { href: "/shopping", label: "Закупки", icon: ShoppingCart },
   { href: "/backlog", label: "Черга", icon: Clock },
+  { href: "/settings", label: "Налаштування", icon: Settings },
 ];
 
 interface SideNavProps {
@@ -62,6 +65,11 @@ export function SideNav({ className }: SideNavProps) {
             </Link>
           );
         })}
+      </div>
+
+      {/* Currency toggle at bottom */}
+      <div className="mt-auto border-t border-border p-3">
+        <CurrencyToggle className="w-full justify-center" />
       </div>
     </nav>
   );

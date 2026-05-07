@@ -1,6 +1,5 @@
 import { OrderStatus, PartStatus } from "@prisma/client";
 
-export const CURRENCY = "₴";
 export const IDLE_THRESHOLD_DAYS = 3;
 export const DREAM_FUND_PERCENT = 0.05;
 export const POSTPONED_REMINDER_DAYS = 30;

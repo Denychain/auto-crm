@@ -6,7 +6,9 @@ import { differenceInDays } from "date-fns";
 import { Phone, FileText, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { formatMoney, formatPlate } from "@/lib/utils";
+import { formatPlate } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { cancelBacklogEntry } from "@/app/backlog/actions";
 import { CallDialog } from "./CallDialog";
 
@@ -38,6 +40,7 @@ export function BacklogRow({
 }: BacklogRowProps) {
   const [callOpen, setCallOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { displayCurrency } = useCurrency();
 
   const daysAgo = differenceInDays(new Date(), createdAt);
   const advance = n(advancePayment);
@@ -90,11 +93,11 @@ export function BacklogRow({
           {/* Footer stats */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             <span className="font-semibold text-green-700">
-              Завдаток: {formatMoney(advance)}
+              Завдаток: {formatMoney(advance, displayCurrency)}
             </span>
             {estimated > 0 && (
               <span className="text-muted-foreground">
-                Орієнтовно: {formatMoney(estimated)}
+                Орієнтовно: {formatMoney(estimated, displayCurrency)}
               </span>
             )}
             <span className="text-muted-foreground">

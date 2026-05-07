@@ -3,11 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { formatMoney, formatPlate } from "@/lib/utils";
+import { formatPlate } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import type { WorkerGroup } from "@/lib/finance";
 
 export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const { displayCurrency } = useCurrency();
 
   if (groups.length === 0) {
     return (
@@ -34,7 +37,7 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">👷 Виплати майстрам</h2>
-        <span className="text-sm font-bold">{formatMoney(totalWages)}</span>
+        <span className="text-sm font-bold">{formatMoney(totalWages, displayCurrency)}</span>
       </div>
 
       <div className="overflow-hidden rounded-xl border">
@@ -53,7 +56,7 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">{formatMoney(g.total)}</span>
+                  <span className="font-bold">{formatMoney(g.total, displayCurrency)}</span>
                   {open ? (
                     <ChevronUp className="size-4 text-muted-foreground" />
                   ) : (
@@ -78,7 +81,7 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
                           {o.clientName}
                         </span>
                       </div>
-                      <span className="shrink-0 font-medium">{formatMoney(o.amount)}</span>
+                      <span className="shrink-0 font-medium">{formatMoney(o.amount, displayCurrency)}</span>
                     </Link>
                   ))}
                 </div>

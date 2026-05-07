@@ -14,7 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/orders/StatusBadge";
-import { formatMoney, formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { viberLink, telegramLink, smsLink } from "@/lib/messenger";
 import {
   updateClientNote,
@@ -183,6 +185,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">("all");
+  const { displayCurrency } = useCurrency();
 
   const viberHref = viberLink(phone, `Доброго дня, ${name}!`);
   const tgHref = telegramLink(`Доброго дня, ${name}!`);
@@ -350,7 +353,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
                         <p className="mt-0.5 line-clamp-2 text-sm font-medium">{o.description}</p>
                       )}
                     </div>
-                    {total > 0 && <span className="shrink-0 text-sm font-bold">{formatMoney(total)}</span>}
+                    {total > 0 && <span className="shrink-0 text-sm font-bold">{formatMoney(total, displayCurrency)}</span>}
                   </div>
                   <StatusBadge status={o.status} />
                 </Link>
@@ -367,7 +370,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
               {totalDebt > 0.01 ? "Загальний борг" : "Заборгованості немає"}
             </p>
             {totalDebt > 0.01 && (
-              <p className="text-2xl font-bold text-red-700">{formatMoney(totalDebt)}</p>
+              <p className="text-2xl font-bold text-red-700">{formatMoney(totalDebt, displayCurrency)}</p>
             )}
           </div>
 
@@ -395,7 +398,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
                     </p>
                     <p className="text-sm font-medium line-clamp-1">{o.description ?? "Замовлення"}</p>
                   </div>
-                  <span className="text-sm font-bold text-red-600">{formatMoney(debt)}</span>
+                  <span className="text-sm font-bold text-red-600">{formatMoney(debt, displayCurrency)}</span>
                 </Link>
               );
             })}
@@ -420,7 +423,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
                   </div>
                   <div className="flex justify-between font-medium">
                     <span>Сплачено за весь час</span>
-                    <span>{formatMoney(closedTotal)}</span>
+                    <span>{formatMoney(closedTotal, displayCurrency)}</span>
                   </div>
                 </>
               );

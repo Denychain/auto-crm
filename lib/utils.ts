@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { differenceInDays } from "date-fns";
 import { OrderStatus } from "@prisma/client";
-import { CURRENCY, IDLE_THRESHOLD_DAYS } from "./constants";
+import { IDLE_THRESHOLD_DAYS } from "./constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -14,15 +14,6 @@ function toNumber(val: DecimalLike): number {
   if (val == null) return 0;
   if (typeof val === "object" && "toNumber" in val) return val.toNumber();
   return Number(val);
-}
-
-export function formatMoney(amount: DecimalLike): string {
-  const num = toNumber(amount);
-  const rounded = Math.round(num * 100) / 100;
-  const [intPart, decPart] = rounded.toFixed(2).split(".");
-  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  const decimal = decPart === "00" ? "" : `,${decPart}`;
-  return `${formatted}${decimal} ${CURRENCY}`;
 }
 
 type WorkLike = { price: DecimalLike };

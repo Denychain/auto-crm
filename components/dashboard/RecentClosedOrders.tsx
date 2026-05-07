@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { formatMoney, formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { Currency } from "@prisma/client";
 
 function n(v: unknown): number {
   if (v == null) return 0;
@@ -22,11 +24,13 @@ interface ClosedOrder {
 interface RecentClosedOrdersProps {
   orders: ClosedOrder[];
   weekRevenue: number;
+  displayCurrency?: Currency;
 }
 
 export function RecentClosedOrders({
   orders,
   weekRevenue,
+  displayCurrency = Currency.UAH,
 }: RecentClosedOrdersProps) {
   if (orders.length === 0) return null;
 
@@ -35,7 +39,7 @@ export function RecentClosedOrders({
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">📊 Цього тижня закрито</h3>
         <span className="text-sm font-bold text-green-700">
-          {formatMoney(weekRevenue)}
+          {formatMoney(weekRevenue, displayCurrency)}
         </span>
       </div>
       <div className="flex flex-col gap-2">
@@ -65,7 +69,7 @@ export function RecentClosedOrders({
                 </p>
               </div>
               <span className="shrink-0 text-sm font-bold text-green-700">
-                {formatMoney(total)}
+                {formatMoney(total, displayCurrency)}
               </span>
             </Link>
           );

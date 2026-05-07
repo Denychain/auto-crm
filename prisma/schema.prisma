@@ -11,6 +11,11 @@ datasource db {
 // 1. ЕНАМИ (Довідники статусів)
 // ==========================================
 
+enum Currency {
+  USD
+  UAH
+}
+
 enum OrderStatus {
   QUEUE           // 🟡 Черга / Очікування
   DISASSEMBLY     // 🛠 Розбірка/Рихтування
@@ -36,7 +41,27 @@ enum PhotoType {
 }
 
 // ==========================================
-// 2. ГОЛОВНІ МОДЕЛІ (Клієнт та Авто)
+// 2. ГЛОБАЛЬНІ НАЛАШТУВАННЯ ТА КУРСИ
+// ==========================================
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  date      DateTime @unique @db.Date
+  usdToUah  Decimal  @db.Decimal(10, 4)
+  source    String   @default("NBU")
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id              String   @id @default("singleton")
+  defaultCurrency Currency @default(USD)
+  displayCurrency Currency @default(USD)
+  autoUpdateRate  Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+// ==========================================
+// 3. ГОЛОВНІ МОДЕЛІ (Клієнт та Авто)
 // ==========================================
 
 model Client {
@@ -67,7 +92,7 @@ model Vehicle {
 }
 
 // ==========================================
-// 3. ЯДРО СИСТЕМИ (Картка замовлення)
+// 4. ЯДРО СИСТЕМИ (Картка замовлення)
 // ==========================================
 
 model Order {
@@ -82,6 +107,8 @@ model Order {
   estimatedPrice   Decimal     @db.Decimal(10, 2) // Орієнтовна ціна (на початку)
   advancePayment   Decimal     @default(0) @db.Decimal(10, 2) // Завдаток
   totalPaid        Decimal     @default(0) @db.Decimal(10, 2) // Скільки вже сплачено по факту
+  currency         Currency    @default(UAH)
+  baseExchangeRate Decimal?    @db.Decimal(10, 4) // Курс USD→UAH на момент створення
   
   // -- Дати та Таймери --
   readyDate        DateTime?   // Фіксується, коли статус стає DONE (для лічильника простою)
@@ -99,17 +126,19 @@ model Order {
 }
 
 // ==========================================
-// 4. КОНСТРУКТОР ТА ФІНАНСИ
+// 5. КОНСТРУКТОР ТА ФІНАНСИ
 // ==========================================
 
 // Додаткові роботи (Поле 1, Поле 2...)
 model OrderWork {
-  id          String   @id @default(uuid())
-  orderId     String
-  name        String   // Напр. "Пайка бампера", "Базова робота"
-  price       Decimal  @db.Decimal(10, 2)
-  
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  orderId      String
+  name         String   // Напр. "Пайка бампера", "Базова робота"
+  price        Decimal  @db.Decimal(10, 2)
+  currency     Currency @default(UAH)
+  exchangeRate Decimal? @db.Decimal(10, 4)
+
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // Модуль "Запчастини" (План/Факт)
@@ -118,10 +147,12 @@ model OrderPart {
   orderId        String
   name           String     // "Ліве крило", "Кліпси"
   status         PartStatus @default(NEED_TO_BUY)
-  
+
   estimatedPrice Decimal    @default(0) @db.Decimal(10, 2) // План (озвучили клієнту)
   actualPrice    Decimal?   @db.Decimal(10, 2)             // Факт (реальна витрата)
-  
+  currency       Currency   @default(UAH)
+  exchangeRate   Decimal?   @db.Decimal(10, 4)
+
   order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
@@ -139,16 +170,18 @@ model OrderPhoto {
 
 // Розподіл фінансів (Зарплати майстрам)
 model WorkerShare {
-  id          String   @id @default(uuid())
-  orderId     String
-  workerName  String   // "Ілля", "Тато", "Вася" (або можна винести Worker в окрему таблицю)
-  amount      Decimal  @db.Decimal(10, 2) // Частка у валюті
-  
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  orderId      String
+  workerName   String   // "Ілля", "Тато", "Вася"
+  amount       Decimal  @db.Decimal(10, 2)
+  currency     Currency @default(UAH)
+  exchangeRate Decimal? @db.Decimal(10, 4)
+
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // ==========================================
-// 5. ГЛОБАЛЬНІ МОДУЛІ (Без прив'язки до замовлення)
+// 6. ГЛОБАЛЬНІ МОДУЛІ (Без прив'язки до замовлення)
 // ==========================================
 
 // Модуль "Закупки" (Shopping List)
@@ -165,7 +198,8 @@ model DreamFund {
   id            String   @id @default(uuid())
   goalName      String   // Напр. "Нова камера"
   targetAmount  Decimal  @db.Decimal(10, 2)
-  currentAmount Decimal  @default(0) @db.Decimal(10, 2) // Сюди додаються 5% від закритих замовлень
-  
+  currentAmount Decimal  @default(0) @db.Decimal(10, 2)
+  currency      Currency @default(USD)
+
   createdAt     DateTime @default(now())
 }

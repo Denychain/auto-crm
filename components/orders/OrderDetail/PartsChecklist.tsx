@@ -3,12 +3,15 @@
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Plus, Loader2 } from "lucide-react";
-import { PartStatus, type OrderPart } from "@prisma/client";
+import { Currency, PartStatus, type OrderPart } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { PART_STATUS_LABELS } from "@/lib/constants";
-import { formatMoney, cn } from "@/lib/utils";
+import { formatMoney, convert } from "@/lib/currency";
+import { cn } from "@/lib/utils";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { addPart, updatePart, deletePart } from "@/app/orders/[id]/actions";
 
 const STATUS_CYCLE: PartStatus[] = [
@@ -29,6 +32,8 @@ function PartRow({
   onDelete,
   onUpdate,
   disabled,
+  displayCurrency,
+  rate,
 }: {
   part: OrderPart;
   onDelete: (id: string) => void;
@@ -39,28 +44,35 @@ function PartRow({
       status: PartStatus;
       estimatedPrice: number;
       actualPrice: number | null;
+      currency: Currency;
     }
   ) => void;
   disabled: boolean;
+  displayCurrency: Currency;
+  rate: number | null;
 }) {
+  const partCurrency = ((part as { currency?: string }).currency ?? "UAH") as Currency;
   const [name, setName] = useState(part.name);
   const [status, setStatus] = useState<PartStatus>(part.status);
-  const [est, setEst] = useState(Number(part.estimatedPrice).toFixed(2));
-  const [act, setAct] = useState(
-    part.actualPrice != null ? Number(part.actualPrice).toFixed(2) : ""
+  const [est, setEst] = useState(Number(part.estimatedPrice));
+  const [act, setAct] = useState<number | null>(
+    part.actualPrice != null ? Number(part.actualPrice) : null
   );
+  const [currency, setCurrency] = useState<Currency>(partCurrency);
   const dirty = useRef(false);
 
-  function save(overrides?: Partial<{ name: string; status: PartStatus; est: string; act: string }>) {
+  function save(overrides?: Partial<{ name: string; status: PartStatus; est: number; act: number | null; currency: Currency }>) {
     const n = overrides?.name ?? name;
     const s = overrides?.status ?? status;
     const e = overrides?.est ?? est;
-    const a = overrides?.act ?? act;
+    const a = overrides?.act !== undefined ? overrides.act : act;
+    const c = overrides?.currency ?? currency;
     onUpdate(part.id, {
       name: n.trim() || part.name,
       status: s,
-      estimatedPrice: parseFloat(e) || 0,
-      actualPrice: a.trim() !== "" ? parseFloat(a) || 0 : null,
+      estimatedPrice: e,
+      actualPrice: a,
+      currency: c,
     });
     dirty.current = false;
   }
@@ -72,6 +84,10 @@ function PartRow({
   }
 
   const { emoji, color } = PART_STATUS_LABELS[status];
+
+  const displayEst = convert({ amount: est, currency }, displayCurrency, rate ?? undefined);
+  const displayAct = act != null ? convert({ amount: act, currency }, displayCurrency, rate ?? undefined) : null;
+  const overbudget = displayAct != null && displayAct > displayEst + 0.01;
 
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/20 p-2.5">
@@ -110,48 +126,51 @@ function PartRow({
         </button>
       </div>
 
-      {/* Row 2: estimated + actual price */}
-      <div className="flex items-center gap-2 pl-8">
-        <label className="flex flex-1 items-center gap-1 text-xs text-muted-foreground">
+      {/* Row 2: currency + estimated + actual */}
+      <div className="flex flex-col gap-1.5 pl-8">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="w-12 shrink-0">Кошт.:</span>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
+          <MoneyInput
             value={est}
-            onChange={(e) => {
-              setEst(e.target.value);
+            currency={currency}
+            currentRate={rate ?? undefined}
+            onChange={(v, c) => {
+              setEst(v);
+              setCurrency(c);
               dirty.current = true;
             }}
-            onBlur={() => dirty.current && save()}
             disabled={disabled}
-            placeholder="0.00"
-            className="h-7 text-right text-xs"
+            className="flex-1"
           />
-        </label>
-        <label className="flex flex-1 items-center gap-1 text-xs text-muted-foreground">
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="w-12 shrink-0">Факт.:</span>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            value={act}
-            onChange={(e) => {
-              setAct(e.target.value);
+          <MoneyInput
+            value={act ?? 0}
+            currency={currency}
+            currentRate={rate ?? undefined}
+            onChange={(v, c) => {
+              setAct(v > 0 ? v : null);
+              setCurrency(c);
               dirty.current = true;
             }}
-            onBlur={() => dirty.current && save()}
             disabled={disabled}
             placeholder="—"
-            className="h-7 text-right text-xs"
+            className="flex-1"
           />
-        </label>
+        </div>
+        {currency !== displayCurrency && (
+          <p className="text-xs text-muted-foreground">
+            ≈ план {formatMoney(displayEst, displayCurrency)}
+            {displayAct != null ? `, факт ${formatMoney(displayAct, displayCurrency)}` : ""}
+          </p>
+        )}
       </div>
 
       {/* Overbudget warning */}
-      {act.trim() !== "" && parseFloat(act) > parseFloat(est || "0") && (
+      {overbudget && (
         <p className="pl-8 text-xs font-medium text-red-600">
-          Перевитрата +{formatMoney(parseFloat(act) - (parseFloat(est) || 0))}
+          Перевитрата +{formatMoney((displayAct ?? 0) - displayEst, displayCurrency)}
         </p>
       )}
     </div>
@@ -163,19 +182,25 @@ function PartRow({
 function AddPartForm({
   onAdd,
   disabled,
+  defaultCurrency,
+  rate,
 }: {
-  onAdd: (name: string, estimatedPrice: number) => void;
+  onAdd: (name: string, estimatedPrice: number, currency: Currency) => void;
   disabled: boolean;
+  defaultCurrency: Currency;
+  rate: number | null;
 }) {
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(0);
+  const [currency, setCurrency] = useState<Currency>(defaultCurrency);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    onAdd(name.trim(), parseFloat(price) || 0);
+    onAdd(name.trim(), price, currency);
     setName("");
-    setPrice("");
+    setPrice(0);
+    setCurrency(defaultCurrency);
   }
 
   return (
@@ -187,15 +212,16 @@ function AddPartForm({
         placeholder="Нова запчастина..."
         className="flex-1 text-sm"
       />
-      <Input
-        type="number"
-        min="0"
-        step="0.01"
+      <MoneyInput
         value={price}
-        onChange={(e) => setPrice(e.target.value)}
+        currency={currency}
+        currentRate={rate ?? undefined}
+        onChange={(v, c) => {
+          setPrice(v);
+          setCurrency(c);
+        }}
         disabled={disabled}
-        placeholder="₴"
-        className="w-24 text-right text-sm"
+        className="w-36"
       />
       <Button
         type="submit"
@@ -220,22 +246,33 @@ interface PartsChecklistProps {
 export function PartsChecklist({ orderId, initialParts }: PartsChecklistProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { displayCurrency, rate } = useCurrency();
 
-  const sumPlan = initialParts.reduce((sum, p) => sum + Number(p.estimatedPrice), 0);
-  const sumActual = initialParts.reduce(
-    (sum, p) =>
-      sum + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
-    0
-  );
+  function toDisplay(amount: number, partCurrency: Currency) {
+    return convert({ amount, currency: partCurrency }, displayCurrency, rate ?? undefined);
+  }
+
+  const sumPlan = initialParts.reduce((sum, p) => {
+    const pc = ((p as { currency?: string }).currency ?? "UAH") as Currency;
+    return sum + toDisplay(Number(p.estimatedPrice), pc);
+  }, 0);
+
+  const sumActual = initialParts.reduce((sum, p) => {
+    const pc = ((p as { currency?: string }).currency ?? "UAH") as Currency;
+    const v = p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice);
+    return sum + toDisplay(v, pc);
+  }, 0);
+
   const diff = sumActual - sumPlan;
 
-  function handleAdd(name: string, estimatedPrice: number) {
+  function handleAdd(name: string, estimatedPrice: number, currency: Currency) {
     startTransition(async () => {
       await addPart(orderId, {
         name,
         status: PartStatus.NEED_TO_BUY,
         estimatedPrice,
         actualPrice: null,
+        currency,
       });
       router.refresh();
     });
@@ -255,6 +292,7 @@ export function PartsChecklist({ orderId, initialParts }: PartsChecklistProps) {
       status: PartStatus;
       estimatedPrice: number;
       actualPrice: number | null;
+      currency: Currency;
     }
   ) {
     startTransition(async () => {
@@ -271,7 +309,7 @@ export function PartsChecklist({ orderId, initialParts }: PartsChecklistProps) {
             {isPending && (
               <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
             )}
-            <span className="text-sm font-semibold">{formatMoney(sumActual)}</span>
+            <span className="text-sm font-semibold">{formatMoney(sumActual, displayCurrency)}</span>
           </div>
         </div>
       </CardHeader>
@@ -288,6 +326,8 @@ export function PartsChecklist({ orderId, initialParts }: PartsChecklistProps) {
             onDelete={handleDelete}
             onUpdate={handleUpdate}
             disabled={isPending}
+            displayCurrency={displayCurrency}
+            rate={rate}
           />
         ))}
         {/* Plan/Fact summary footer */}
@@ -295,23 +335,23 @@ export function PartsChecklist({ orderId, initialParts }: PartsChecklistProps) {
           <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">План</span>
-              <span>{formatMoney(sumPlan)}</span>
+              <span>{formatMoney(sumPlan, displayCurrency)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Факт</span>
-              <span>{formatMoney(sumActual)}</span>
+              <span>{formatMoney(sumActual, displayCurrency)}</span>
             </div>
-            {diff !== 0 && (
+            {Math.abs(diff) > 0.01 && (
               <div className={cn("flex justify-between font-medium", diff > 0 ? "text-red-600" : "text-green-700")}>
                 <span>Різниця</span>
-                <span>{diff > 0 ? `+${formatMoney(diff)}` : `-${formatMoney(Math.abs(diff))}`}</span>
+                <span>{diff > 0 ? `+${formatMoney(diff, displayCurrency)}` : `-${formatMoney(Math.abs(diff), displayCurrency)}`}</span>
               </div>
             )}
           </div>
         )}
 
         <div className={cn("border-t pt-2", initialParts.length === 0 && "border-t-0 pt-0")}>
-          <AddPartForm onAdd={handleAdd} disabled={isPending} />
+          <AddPartForm onAdd={handleAdd} disabled={isPending} defaultCurrency={displayCurrency} rate={rate} />
         </div>
       </CardContent>
     </Card>

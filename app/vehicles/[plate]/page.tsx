@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { VehicleHistory } from "@/components/clients/VehicleHistory";
 import { formatPlate } from "@/lib/utils";
+import { Currency } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -16,22 +17,27 @@ export default async function VehiclePage({
   const { plate: rawPlate } = await params;
   const plate = decodeURIComponent(rawPlate).replace(/\s+/g, "").toUpperCase();
 
-  const vehicle = await prisma.vehicle.findUnique({
-    where: { plateNumber: plate },
-    include: {
-      client: true,
-      orders: {
-        include: {
-          works: { orderBy: { id: "asc" } },
-          parts: { orderBy: { id: "asc" } },
-          photos: { orderBy: { createdAt: "asc" }, take: 3 },
+  const [vehicle, settings] = await Promise.all([
+    prisma.vehicle.findUnique({
+      where: { plateNumber: plate },
+      include: {
+        client: true,
+        orders: {
+          include: {
+            works: { orderBy: { id: "asc" } },
+            parts: { orderBy: { id: "asc" } },
+            photos: { orderBy: { createdAt: "asc" }, take: 3 },
+          },
+          orderBy: { createdAt: "desc" },
         },
-        orderBy: { createdAt: "desc" },
       },
-    },
-  });
+    }),
+    prisma.settings.findUnique({ where: { id: "singleton" } }),
+  ]);
 
   if (!vehicle) notFound();
+
+  const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
 
   return (
     <div className="flex min-h-full flex-col">
@@ -77,7 +83,7 @@ export default async function VehiclePage({
         </div>
 
         {/* Timeline */}
-        <VehicleHistory orders={vehicle.orders as never} />
+        <VehicleHistory orders={vehicle.orders as never} displayCurrency={displayCurrency} />
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { PartStatus } from "@prisma/client";
+import { PartStatus, Currency } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { calcOrderTotal } from "@/lib/utils";
+import { getCurrentRate } from "@/lib/exchange-rate";
 
 function revalidate(orderId: string) {
   revalidatePath(`/orders/${orderId}`);
@@ -14,10 +15,18 @@ function revalidate(orderId: string) {
 
 export async function addWork(
   orderId: string,
-  data: { name: string; price: number }
+  data: { name: string; price: number; currency?: Currency }
 ): Promise<void> {
+  const currency = data.currency ?? Currency.UAH;
+  const rate = await getCurrentRate();
   await prisma.orderWork.create({
-    data: { orderId, name: data.name, price: data.price },
+    data: {
+      orderId,
+      name: data.name,
+      price: data.price,
+      currency,
+      exchangeRate: rate,
+    },
   });
   revalidate(orderId);
 }
@@ -25,11 +34,15 @@ export async function addWork(
 export async function updateWork(
   workId: string,
   orderId: string,
-  data: { name: string; price: number }
+  data: { name: string; price: number; currency?: Currency }
 ): Promise<void> {
   await prisma.orderWork.update({
     where: { id: workId },
-    data: { name: data.name, price: data.price },
+    data: {
+      name: data.name,
+      price: data.price,
+      ...(data.currency ? { currency: data.currency } : {}),
+    },
   });
   revalidate(orderId);
 }
@@ -51,8 +64,11 @@ export async function addPart(
     status: PartStatus;
     estimatedPrice: number;
     actualPrice: number | null;
+    currency?: Currency;
   }
 ): Promise<void> {
+  const currency = data.currency ?? Currency.UAH;
+  const rate = await getCurrentRate();
   await prisma.orderPart.create({
     data: {
       orderId,
@@ -60,6 +76,8 @@ export async function addPart(
       status: data.status,
       estimatedPrice: data.estimatedPrice,
       actualPrice: data.actualPrice,
+      currency,
+      exchangeRate: rate,
     },
   });
   revalidate(orderId);
@@ -73,6 +91,7 @@ export async function updatePart(
     status: PartStatus;
     estimatedPrice: number;
     actualPrice: number | null;
+    currency?: Currency;
   }
 ): Promise<void> {
   await prisma.orderPart.update({
@@ -82,6 +101,7 @@ export async function updatePart(
       status: data.status,
       estimatedPrice: data.estimatedPrice,
       actualPrice: data.actualPrice,
+      ...(data.currency ? { currency: data.currency } : {}),
     },
   });
   revalidate(orderId);
@@ -116,10 +136,18 @@ export async function updateFinance(
 
 export async function addWorkerShare(
   orderId: string,
-  data: { workerName: string; amount: number }
+  data: { workerName: string; amount: number; currency?: Currency }
 ): Promise<void> {
+  const currency = data.currency ?? Currency.UAH;
+  const rate = await getCurrentRate();
   await prisma.workerShare.create({
-    data: { orderId, workerName: data.workerName, amount: data.amount },
+    data: {
+      orderId,
+      workerName: data.workerName,
+      amount: data.amount,
+      currency,
+      exchangeRate: rate,
+    },
   });
   revalidate(orderId);
 }
@@ -127,11 +155,15 @@ export async function addWorkerShare(
 export async function updateWorkerShare(
   shareId: string,
   orderId: string,
-  data: { workerName: string; amount: number }
+  data: { workerName: string; amount: number; currency?: Currency }
 ): Promise<void> {
   await prisma.workerShare.update({
     where: { id: shareId },
-    data: { workerName: data.workerName, amount: data.amount },
+    data: {
+      workerName: data.workerName,
+      amount: data.amount,
+      ...(data.currency ? { currency: data.currency } : {}),
+    },
   });
   revalidate(orderId);
 }

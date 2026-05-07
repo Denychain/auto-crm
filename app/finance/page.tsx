@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getDateRangeForPeriod, aggregateFinanceData } from "@/lib/finance";
+import { Currency } from "@prisma/client";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
 import { FinanceSummaryCards } from "@/components/finance/FinanceSummaryCards";
 import { DreamFundWidget } from "@/components/finance/DreamFundWidget";
@@ -26,10 +27,13 @@ export default async function FinancePage({
   const period = sp.period ?? "month";
   const range = getDateRangeForPeriod(period, sp.from, sp.to);
 
-  const [data, funds] = await Promise.all([
+  const [data, funds, settings] = await Promise.all([
     aggregateFinanceData(range),
     prisma.dreamFund.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.settings.findUnique({ where: { id: "singleton" } }),
   ]);
+
+  const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
 
   const periodLabel =
     period === "custom" && sp.from && sp.to
@@ -44,14 +48,15 @@ export default async function FinancePage({
 
       <div className="flex flex-col gap-6 p-4 pb-10">
         <PeriodSelector current={period} from={sp.from} to={sp.to} />
-        <FinanceSummaryCards data={data} periodLabel={periodLabel} />
+        <FinanceSummaryCards data={data} periodLabel={periodLabel} displayCurrency={displayCurrency} />
         <DreamFundWidget funds={funds as never} />
         <RevenueBreakdown
           revenue={data.revenue}
           materials={data.materials}
           wages={data.wages}
+          displayCurrency={displayCurrency}
         />
-        <PlanFactTable orders={data.orderPlanFact} />
+        <PlanFactTable orders={data.orderPlanFact} displayCurrency={displayCurrency} />
         <WorkerPayoutsTable groups={data.workerGroups} />
       </div>
     </div>

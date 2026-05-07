@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { calcOrderTotal, formatMoney, cn } from "@/lib/utils";
+import { calcOrderTotal, cn } from "@/lib/utils";
+import { formatMoney, convert } from "@/lib/currency";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { updateFinance } from "@/app/orders/[id]/actions";
 import type { FullOrder } from "@/types/orders";
 
@@ -15,6 +17,18 @@ interface FinanceBlockProps {
 }
 
 export function FinanceBlock({ order }: FinanceBlockProps) {
+  const { displayCurrency, rate } = useCurrency();
+  const orderCurrency = (order as { currency?: string }).currency ?? "UAH";
+
+  function fmt(amount: number) {
+    const converted = convert(
+      { amount, currency: orderCurrency as import("@prisma/client").Currency },
+      displayCurrency,
+      rate ?? undefined
+    );
+    return formatMoney(converted, displayCurrency);
+  }
+
   const [estimatedPrice, setEstimatedPrice] = useState(
     Number(order.estimatedPrice).toFixed(2)
   );
@@ -90,18 +104,18 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
         {/* Breakdown */}
         <div className={cn(row, "text-muted-foreground")}>
           <span>Роботи</span>
-          <span>{formatMoney(worksTotal)}</span>
+          <span>{fmt(worksTotal)}</span>
         </div>
         <div className={cn(row, "text-muted-foreground")}>
           <span>Запчастини</span>
-          <span>{formatMoney(partsTotal)}</span>
+          <span>{fmt(partsTotal)}</span>
         </div>
 
         <Separator className="my-1" />
 
         <div className={cn(row, "font-semibold")}>
           <span>Загальна сума</span>
-          <span>{formatMoney(orderTotal)}</span>
+          <span>{fmt(orderTotal)}</span>
         </div>
 
         <Separator className="my-1" />
@@ -165,7 +179,7 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
           )}
         >
           <span>{debt > 0.01 ? "До оплати" : "Повністю сплачено"}</span>
-          <span>{debt > 0.01 ? formatMoney(debt) : "✓"}</span>
+          <span>{debt > 0.01 ? fmt(debt) : "✓"}</span>
         </div>
 
         {/* Save button */}

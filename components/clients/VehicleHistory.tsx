@@ -3,7 +3,9 @@ import { format } from "date-fns";
 import { uk } from "date-fns/locale";
 import { OrderStatus, PhotoType } from "@prisma/client";
 import { StatusBadge } from "@/components/orders/StatusBadge";
-import { formatMoney, calcOrderTotal } from "@/lib/utils";
+import { calcOrderTotal } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { Currency } from "@prisma/client";
 
 interface Work { name: string; price: unknown }
 interface Part { estimatedPrice: unknown; actualPrice: unknown }
@@ -25,6 +27,7 @@ interface HistoryOrder {
 
 interface VehicleHistoryProps {
   orders: HistoryOrder[];
+  displayCurrency?: Currency;
 }
 
 function n(v: unknown): number {
@@ -33,7 +36,7 @@ function n(v: unknown): number {
   return Number(v);
 }
 
-export function VehicleHistory({ orders }: VehicleHistoryProps) {
+export function VehicleHistory({ orders, displayCurrency = Currency.UAH }: VehicleHistoryProps) {
   if (orders.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -98,7 +101,7 @@ export function VehicleHistory({ orders }: VehicleHistoryProps) {
                   {order.works.map((w, i) => (
                     <li key={i} className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">{w.name}</span>
-                      <span className="font-medium">{formatMoney(n(w.price))}</span>
+                      <span className="font-medium">{formatMoney(n(w.price), displayCurrency)}</span>
                     </li>
                   ))}
                 </ul>
@@ -108,7 +111,7 @@ export function VehicleHistory({ orders }: VehicleHistoryProps) {
               <div className="flex items-center justify-between">
                 <StatusBadge status={order.status} />
                 {total > 0 && (
-                  <span className="text-sm font-bold">{formatMoney(total)}</span>
+                  <span className="text-sm font-bold">{formatMoney(total, displayCurrency)}</span>
                 )}
               </div>
             </Link>

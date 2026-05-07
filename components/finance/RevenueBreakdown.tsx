@@ -1,12 +1,14 @@
-import { formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { Currency } from "@prisma/client";
 
 interface RevenueBreakdownProps {
   revenue: number;
   materials: number;
   wages: number;
+  displayCurrency?: Currency;
 }
 
-export function RevenueBreakdown({ revenue, materials, wages }: RevenueBreakdownProps) {
+export function RevenueBreakdown({ revenue, materials, wages, displayCurrency = Currency.UAH }: RevenueBreakdownProps) {
   const ownerProfit = Math.max(0, revenue - materials - wages);
 
   if (revenue < 0.01) {
@@ -38,7 +40,7 @@ export function RevenueBreakdown({ revenue, materials, wages }: RevenueBreakdown
               key={s.label}
               className={s.barClass}
               style={{ width: `${pct}%` }}
-              title={`${s.label}: ${formatMoney(s.value)} (${Math.round(pct)}%)`}
+              title={`${s.label}: ${formatMoney(s.value, displayCurrency)} (${Math.round(pct)}%)`}
             />
           );
         })}
@@ -55,7 +57,7 @@ export function RevenueBreakdown({ revenue, materials, wages }: RevenueBreakdown
                 <span className="text-muted-foreground">{s.label}</span>
               </div>
               <div className="flex items-center gap-2 tabular-nums">
-                <span className="font-medium">{formatMoney(s.value)}</span>
+                <span className="font-medium">{formatMoney(s.value, displayCurrency)}</span>
                 <span className="w-9 text-right text-xs text-muted-foreground">
                   {Math.round(pct)}%
                 </span>
@@ -66,7 +68,7 @@ export function RevenueBreakdown({ revenue, materials, wages }: RevenueBreakdown
 
         <div className="flex items-center justify-between border-t pt-2 text-sm font-medium">
           <span>Виручка всього</span>
-          <span className="font-bold">{formatMoney(revenue)}</span>
+          <span className="font-bold">{formatMoney(revenue, displayCurrency)}</span>
         </div>
       </div>
     </div>

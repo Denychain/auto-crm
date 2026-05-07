@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
-import { formatMoney, formatPlate } from "@/lib/utils";
+import { formatPlate } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
 import { viberLink } from "@/lib/messenger";
+import { Currency } from "@prisma/client";
 
 interface Debtor {
   orderId: string;
@@ -13,9 +15,10 @@ interface Debtor {
 interface DebtorsListProps {
   debtors: Debtor[];
   totalDebt: number;
+  displayCurrency?: Currency;
 }
 
-export function DebtorsList({ debtors, totalDebt }: DebtorsListProps) {
+export function DebtorsList({ debtors, totalDebt, displayCurrency = Currency.UAH }: DebtorsListProps) {
   if (debtors.length === 0) return null;
 
   const shown = debtors.slice(0, 5);
@@ -28,13 +31,13 @@ export function DebtorsList({ debtors, totalDebt }: DebtorsListProps) {
           💸 Борг клієнтів
         </h3>
         <span className="text-sm font-bold text-red-700">
-          {formatMoney(totalDebt)}
+          {formatMoney(totalDebt, displayCurrency)}
         </span>
       </div>
 
       <div className="flex flex-col gap-2">
         {shown.map((d) => {
-          const msg = `Нагадуємо про оплату за ремонт ${d.vehicle.make} ${d.vehicle.model} (${formatPlate(d.vehicle.plateNumber)}). Сума: ${formatMoney(d.debt)}`;
+          const msg = `Нагадуємо про оплату за ремонт ${d.vehicle.make} ${d.vehicle.model} (${formatPlate(d.vehicle.plateNumber)}). Сума: ${formatMoney(d.debt, displayCurrency)}`;
           return (
             <div
               key={d.orderId}
@@ -49,7 +52,7 @@ export function DebtorsList({ debtors, totalDebt }: DebtorsListProps) {
               </Link>
               <div className="flex shrink-0 items-center gap-2">
                 <span className="text-sm font-bold text-red-700">
-                  {formatMoney(d.debt)}
+                  {formatMoney(d.debt, displayCurrency)}
                 </span>
                 <a
                   href={viberLink(d.client.phone, msg)}

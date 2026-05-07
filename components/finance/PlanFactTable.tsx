@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { formatMoney, formatPlate } from "@/lib/utils";
+import { formatPlate } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { Currency } from "@prisma/client";
 import type { OrderPlanFact } from "@/lib/finance";
 
-export function PlanFactTable({ orders }: { orders: OrderPlanFact[] }) {
+interface PlanFactTableProps {
+  orders: OrderPlanFact[];
+  displayCurrency?: Currency;
+}
+
+export function PlanFactTable({ orders, displayCurrency = Currency.UAH }: PlanFactTableProps) {
   if (orders.length === 0) {
     return (
       <div className="flex flex-col gap-2">
@@ -24,7 +31,7 @@ export function PlanFactTable({ orders }: { orders: OrderPlanFact[] }) {
 
   function diffLabel(diff: number) {
     if (Math.abs(diff) < 0.01) return "—";
-    return `${diff > 0 ? "+" : ""}${formatMoney(diff)}`;
+    return `${diff > 0 ? "+" : ""}${formatMoney(diff, displayCurrency)}`;
   }
 
   return (
@@ -51,8 +58,8 @@ export function PlanFactTable({ orders }: { orders: OrderPlanFact[] }) {
               {o.client.name} · {o.vehicle.make} {o.vehicle.model}
             </p>
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span>План: {formatMoney(o.planMaterials)}</span>
-              <span>Факт: {formatMoney(o.factMaterials)}</span>
+              <span>План: {formatMoney(o.planMaterials, displayCurrency)}</span>
+              <span>Факт: {formatMoney(o.factMaterials, displayCurrency)}</span>
             </div>
           </Link>
         ))}
@@ -84,8 +91,8 @@ export function PlanFactTable({ orders }: { orders: OrderPlanFact[] }) {
                   </Link>
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">{o.client.name}</td>
-                <td className="px-3 py-2 text-right">{formatMoney(o.planMaterials)}</td>
-                <td className="px-3 py-2 text-right">{formatMoney(o.factMaterials)}</td>
+                <td className="px-3 py-2 text-right">{formatMoney(o.planMaterials, displayCurrency)}</td>
+                <td className="px-3 py-2 text-right">{formatMoney(o.factMaterials, displayCurrency)}</td>
                 <td className={`px-3 py-2 text-right font-semibold ${diffClass(o.diff)}`}>
                   {diffLabel(o.diff)}
                 </td>
@@ -102,9 +109,9 @@ export function PlanFactTable({ orders }: { orders: OrderPlanFact[] }) {
         }`}
       >
         {totalDiff > 0.01
-          ? `Перевитрата матеріалів: ${formatMoney(totalDiff)} — це втрачений прибуток`
+          ? `Перевитрата матеріалів: ${formatMoney(totalDiff, displayCurrency)} — це втрачений прибуток`
           : totalDiff < -0.01
-          ? `Економія на матеріалах: ${formatMoney(Math.abs(totalDiff))}`
+          ? `Економія на матеріалах: ${formatMoney(Math.abs(totalDiff), displayCurrency)}`
           : "Матеріали в бюджеті — відхилень немає"}
       </div>
     </div>
