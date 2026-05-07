@@ -4,6 +4,7 @@ import { OrderStatus } from "@prisma/client";
 import { formatMoney } from "@/lib/currency";
 import { Currency } from "@prisma/client";
 import { BacklogRow } from "@/components/backlog/BacklogRow";
+import { deepSerialize } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function BacklogPage() {
   const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
   const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
 
-  const orders = await prisma.order.findMany({
+  const orders = deepSerialize(await prisma.order.findMany({
     where: {
       status: OrderStatus.QUEUE,
       advancePayment: { gt: 0 },
@@ -29,7 +30,7 @@ export default async function BacklogPage() {
       works: { select: { name: true, price: true } },
     },
     orderBy: { createdAt: "asc" },
-  });
+  }));
 
   const totalAdvance = orders.reduce((sum, o) => sum + n(o.advancePayment), 0);
 
