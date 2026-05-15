@@ -65,6 +65,7 @@ export async function addPart(
     estimatedPrice: number;
     actualPrice: number | null;
     currency?: Currency;
+    articleCode?: string;
   }
 ): Promise<void> {
   const currency = data.currency ?? Currency.UAH;
@@ -78,6 +79,7 @@ export async function addPart(
       actualPrice: data.actualPrice,
       currency,
       exchangeRate: rate,
+      ...(data.articleCode ? { articleCode: data.articleCode.trim() } : {}),
     },
   });
   revalidate(orderId);
@@ -92,6 +94,7 @@ export async function updatePart(
     estimatedPrice: number;
     actualPrice: number | null;
     currency?: Currency;
+    articleCode?: string | null;
   }
 ): Promise<void> {
   await prisma.orderPart.update({
@@ -102,6 +105,7 @@ export async function updatePart(
       estimatedPrice: data.estimatedPrice,
       actualPrice: data.actualPrice,
       ...(data.currency ? { currency: data.currency } : {}),
+      articleCode: data.articleCode?.trim() || null,
     },
   });
   revalidate(orderId);

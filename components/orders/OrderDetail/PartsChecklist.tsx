@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, Loader2 } from "lucide-react";
+import { Trash2, Plus, Loader2, Search } from "lucide-react";
 import { Currency, PartStatus, type OrderPart } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ function PartRow({
       estimatedPrice: number;
       actualPrice: number | null;
       currency: Currency;
+      articleCode: string | null;
     }
   ) => void;
   disabled: boolean;
@@ -59,22 +60,33 @@ function PartRow({
     part.actualPrice != null ? Number(part.actualPrice) : null
   );
   const [currency, setCurrency] = useState<Currency>(partCurrency);
+  const [articleCode, setArticleCode] = useState<string>(
+    (part as { articleCode?: string | null }).articleCode ?? ""
+  );
   const dirty = useRef(false);
 
-  function save(overrides?: Partial<{ name: string; status: PartStatus; est: number; act: number | null; currency: Currency }>) {
+  function save(overrides?: Partial<{ name: string; status: PartStatus; est: number; act: number | null; currency: Currency; articleCode: string }>) {
     const n = overrides?.name ?? name;
     const s = overrides?.status ?? status;
     const e = overrides?.est ?? est;
     const a = overrides?.act !== undefined ? overrides.act : act;
     const c = overrides?.currency ?? currency;
+    const code = overrides?.articleCode !== undefined ? overrides.articleCode : articleCode;
     onUpdate(part.id, {
       name: n.trim() || part.name,
       status: s,
       estimatedPrice: e,
       actualPrice: a,
       currency: c,
+      articleCode: code.trim() || null,
     });
     dirty.current = false;
+  }
+
+  function openCatalog() {
+    const code = articleCode.trim();
+    if (!code) return;
+    window.open(`https://avtopro.ua/catalog/code/?article=${encodeURIComponent(code)}`, "_blank");
   }
 
   function handleStatusCycle() {
@@ -126,7 +138,30 @@ function PartRow({
         </button>
       </div>
 
-      {/* Row 2: currency + estimated + actual */}
+      {/* Row 2: article code + catalog search */}
+      <div className="flex items-center gap-1.5 pl-8">
+        <Input
+          value={articleCode}
+          onChange={(e) => { setArticleCode(e.target.value); dirty.current = true; }}
+          onBlur={() => dirty.current && save()}
+          onKeyDown={(e) => e.key === "Enter" && openCatalog()}
+          disabled={disabled}
+          placeholder="Артикул..."
+          className="h-7 flex-1 font-mono text-xs"
+        />
+        <button
+          type="button"
+          onClick={openCatalog}
+          disabled={disabled || !articleCode.trim()}
+          title="Шукати в avtopro.ua"
+          className="flex shrink-0 items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-40"
+        >
+          <Search className="size-3" />
+          <span>Каталог</span>
+        </button>
+      </div>
+
+      {/* Row 3: currency + estimated + actual */}
       <div className="flex flex-col gap-1.5 pl-8">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="w-12 shrink-0">Кошт.:</span>
@@ -293,6 +328,7 @@ export function PartsChecklist({ orderId, initialParts }: PartsChecklistProps) {
       estimatedPrice: number;
       actualPrice: number | null;
       currency: Currency;
+      articleCode: string | null;
     }
   ) {
     startTransition(async () => {

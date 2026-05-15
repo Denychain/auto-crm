@@ -146,6 +146,7 @@ model OrderPart {
   id             String     @id @default(uuid())
   orderId        String
   name           String     // "Ліве крило", "Кліпси"
+  articleCode    String?    // Артикул для пошуку в каталозі
   status         PartStatus @default(NEED_TO_BUY)
 
   estimatedPrice Decimal    @default(0) @db.Decimal(10, 2) // План (озвучили клієнту)
