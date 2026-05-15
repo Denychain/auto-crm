@@ -2,7 +2,8 @@
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, Loader2, Search } from "lucide-react";
+import { Trash2, Plus, Loader2, Search, Copy, CheckCheck } from "lucide-react";
+import { toast } from "sonner";
 import { Currency, PartStatus, type OrderPart } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -83,10 +84,16 @@ function PartRow({
     dirty.current = false;
   }
 
-  function openCatalog() {
+  async function openCatalog() {
     const code = articleCode.trim();
     if (!code) return;
-    window.open(`https://avtopro.ua/catalog/code/?article=${encodeURIComponent(code)}`, "_blank");
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      // clipboard not available — proceed anyway
+    }
+    window.open("https://avtopro.ua/", "_blank");
+    toast.success(`Артикул "${code}" скопійовано — вставте в пошук на сайті (Ctrl+V)`);
   }
 
   function handleStatusCycle() {
