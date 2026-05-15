@@ -104,8 +104,8 @@ export function NewOrderForm() {
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
 
   // ── derived ──────────────────────────────────────────────────────────────
-  const requiredFilled = photoSlots.filter((s) => s.required && (s.file || s.existingUrl)).length;
-  const canSave = requiredFilled >= 4 && !isSaving;
+  const filledPhotos = photoSlots.filter((s) => s.file || s.existingUrl).length;
+  const canSave = !isSaving;
 
   // ── handlers ─────────────────────────────────────────────────────────────
 
@@ -437,15 +437,27 @@ export function NewOrderForm() {
               </div>
 
               {!showStep4 && (
-                <Button
-                  type="button"
-                  size="lg"
-                  className="h-12 w-full"
-                  onClick={handleStep3Continue}
-                  disabled={isSaving}
-                >
-                  Далі — Фото-акт
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="h-12 w-full"
+                    onClick={handleStep3Continue}
+                    disabled={isSaving}
+                  >
+                    Далі — Фото-акт
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="h-12 w-full"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? <Loader2 className="size-4 animate-spin" /> : "Зберегти без фото"}
+                  </Button>
+                </div>
               )}
             </div>
           </Section>
@@ -499,7 +511,7 @@ export function NewOrderForm() {
                   : "Збереження..."}
               </>
             ) : (
-              `Зберегти замовлення${requiredFilled < 4 ? ` (потрібно ще ${4 - requiredFilled} фото)` : ""}`
+              `Зберегти замовлення${filledPhotos > 0 ? ` (${filledPhotos} фото)` : ""}`
             )}
           </Button>
         </>
