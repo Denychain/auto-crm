@@ -21,11 +21,19 @@ import {
   type PhotoSlotState,
 } from "@/components/orders/PhotoActUploader";
 
-const DESCRIPTION_CHIPS = [
-  "Фарбування капота",
-  "Рихтування дверей",
-  "Полірування",
-  "Заміна крила",
+const PRICE_LIST = [
+  { label: "Капот зовні",       range: "260–500" },
+  { label: "Капот всередині",   range: "100–150" },
+  { label: "Двері",             range: "160–200" },
+  { label: "Крило переднє",     range: "160–180" },
+  { label: "Крило заднє",       range: "170–200" },
+  { label: "Бампер",            range: "180–250" },
+  { label: "Пороги",            range: "150–170" },
+  { label: "Внутрянка",         range: "60–120" },
+  { label: "Багажник",          range: "160–220" },
+  { label: "Фари (пара)",       range: "60–80" },
+  { label: "Дзеркало/решітка",  range: "індивід." },
+  { label: "Підйомник",         range: null },
 ];
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
@@ -364,23 +372,31 @@ export function NewOrderForm() {
           <Separator />
           <Section step={plateStatus === "notFound" ? 3 : 2} label="Опис роботи та ціна">
             <div className="flex flex-col gap-3">
-              {/* Quick chips */}
-              <div className="flex flex-wrap gap-2">
-                {DESCRIPTION_CHIPS.map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() =>
-                      setDescription((prev) =>
-                        prev ? `${prev}, ${chip.toLowerCase()}` : chip
-                      )
-                    }
-                    disabled={isSaving}
-                    className="rounded-full border border-dashed px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground disabled:opacity-40"
-                  >
-                    + {chip}
-                  </button>
-                ))}
+              {/* Price reference — horizontal scroll */}
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Прайс (натисни — вставить у опис)</span>
+                <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {PRICE_LIST.map(({ label, range }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() =>
+                        setDescription((prev) =>
+                          prev ? `${prev}, ${label.toLowerCase()}` : label
+                        )
+                      }
+                      disabled={isSaving}
+                      className="flex shrink-0 flex-col items-center rounded-xl border bg-muted/50 px-3 py-1.5 text-left transition-colors hover:bg-muted active:scale-95 disabled:opacity-40"
+                    >
+                      <span className="whitespace-nowrap text-xs font-medium leading-tight">{label}</span>
+                      {range && (
+                        <span className="whitespace-nowrap text-[10px] text-muted-foreground leading-tight">
+                          {range} ₴
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <Textarea
