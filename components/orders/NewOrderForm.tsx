@@ -391,7 +391,7 @@ export function NewOrderForm() {
                       <span className="whitespace-nowrap text-xs font-medium leading-tight">{label}</span>
                       {range && (
                         <span className="whitespace-nowrap text-[10px] text-muted-foreground leading-tight">
-                          {range} ₴
+                          {range} $
                         </span>
                       )}
                     </button>
