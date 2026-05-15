@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
+import { FloatingCalculator } from "@/components/layout/FloatingCalculator";
 import { prisma } from "@/lib/prisma";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { Currency } from "@prisma/client";
@@ -79,6 +80,7 @@ export default async function RootLayout({
           </div>
 
           <BottomNav className="md:hidden" />
+          <FloatingCalculator />
           <Toaster />
           <InstallPrompt />
         </CurrencyProvider>
