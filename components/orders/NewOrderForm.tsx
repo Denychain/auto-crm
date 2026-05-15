@@ -321,14 +321,14 @@ export function NewOrderForm() {
                 <Input
                   value={make}
                   onChange={(e) => setMake(e.target.value)}
-                  placeholder="Марка (BMW)"
+                  placeholder="Марка"
                   className="h-12 flex-1"
                   disabled={isSaving}
                 />
                 <Input
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  placeholder="Модель (X5)"
+                  placeholder="Модель"
                   className="h-12 flex-1"
                   disabled={isSaving}
                 />
