@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,7 @@ import {
   updateWorkerShare,
   deleteWorkerShare,
   applyShareTemplate,
-} from "@/app/orders/[id]/actions";
+} from "@/app/(crm)/orders/[id]/actions";
 import type { FullOrder } from "@/types/orders";
 
 // ── Single worker row ─────────────────────────────────────────────────────────

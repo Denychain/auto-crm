@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { Currency } from "@prisma/client";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { updateSettings, refreshRateFromNBU, setManualRate } from "@/app/settings/actions";
+import { updateSettings, refreshRateFromNBU, setManualRate } from "@/app/(crm)/settings/actions";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import type { ExchangeRate } from "@prisma/client";
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatPlate } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { cancelBacklogEntry } from "@/app/backlog/actions";
+import { cancelBacklogEntry } from "@/app/(crm)/backlog/actions";
 import { CallDialog } from "./CallDialog";
 
 function n(v: unknown): number {

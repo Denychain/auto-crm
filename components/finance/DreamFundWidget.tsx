@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { Pencil, Trash2, Plus, Check, X, Loader2, Star } from "lucide-react";
@@ -18,7 +18,7 @@ import {
   createDreamFund,
   updateDreamFund,
   deleteDreamFund,
-} from "@/app/finance/actions";
+} from "@/app/(crm)/finance/actions";
 
 interface DreamFund {
   id: string;

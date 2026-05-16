@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import {
@@ -16,7 +16,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { KanbanColumn } from "./KanbanColumn";
 import { OrderCard } from "./OrderCard";
-import { updateOrderStatus } from "@/app/orders/actions";
+import { updateOrderStatus } from "@/app/(crm)/orders/actions";
 import type { OrderWithRelations } from "@/types/orders";
 
 // Fixed column display order

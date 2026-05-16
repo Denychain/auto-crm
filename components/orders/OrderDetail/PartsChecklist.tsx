@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ import { PART_STATUS_LABELS } from "@/lib/constants";
 import { formatMoney, convert } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { addPart, updatePart, deletePart } from "@/app/orders/[id]/actions";
+import { addPart, updatePart, deletePart } from "@/app/(crm)/orders/[id]/actions";
 
 const STATUS_CYCLE: PartStatus[] = [
   PartStatus.NEED_TO_BUY,

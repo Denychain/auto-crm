@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { viberLink, telegramLink, smsLink, tplCallToService } from "@/lib/messenger";
-import { moveFromBacklogToActive } from "@/app/backlog/actions";
+import { moveFromBacklogToActive } from "@/app/(crm)/backlog/actions";
 
 interface CallDialogProps {
   open: boolean;

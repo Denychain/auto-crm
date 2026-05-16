@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/orders/StatusBadge";
 import { STATUS_LABELS } from "@/lib/constants";
-import { updateOrderStatus } from "@/app/orders/actions";
+import { updateOrderStatus } from "@/app/(crm)/orders/actions";
 import { calcIdleDays, isOverdue, cn } from "@/lib/utils";
 import { viberLink, telegramLink } from "@/lib/messenger";
 import type { FullOrder } from "@/types/orders";

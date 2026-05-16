@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useTransition } from "react";
 import { CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShoppingItem } from "./ShoppingItem";
-import { markAllPurchased } from "@/app/shopping/actions";
+import { markAllPurchased } from "@/app/(crm)/shopping/actions";
 
 interface Item {
   id: string;

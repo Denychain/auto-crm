@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -23,7 +23,7 @@ import {
   addVehicle,
   removeVehicle,
   deleteClient,
-} from "@/app/clients/[id]/actions";
+} from "@/app/(crm)/clients/[id]/actions";
 
 function n(v: unknown): number {
   if (v == null) return 0;

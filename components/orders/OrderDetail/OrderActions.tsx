@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { updateOrderStatus, deleteOrder } from "@/app/orders/actions";
+import { updateOrderStatus, deleteOrder } from "@/app/(crm)/orders/actions";
 
 interface OrderActionsProps {
   orderId: string;

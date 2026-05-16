@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { CurrencyToggle } from "@/components/ui/CurrencyToggle";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Головна", icon: Home },
+  { href: "/dashboard", label: "Головна", icon: Home },
   { href: "/orders", label: "Замовлення", icon: ClipboardList },
   { href: "/clients", label: "Клієнти", icon: Users },
   { href: "/finance", label: "Фінанси", icon: Wallet },
@@ -47,7 +47,7 @@ export function SideNav({ className }: SideNavProps) {
       <div className="flex flex-col gap-1 p-2">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+            href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
 
           return (
             <Link

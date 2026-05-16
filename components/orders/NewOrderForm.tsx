@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import {
   searchVehicleByPlate,
   searchClientByPhone,
   createOrderWithPhotos,
-} from "@/app/orders/new/actions";
+} from "@/app/(crm)/orders/new/actions";
 import {
   PhotoActUploader,
   initSlots,

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { Loader2, Save } from "lucide-react";
@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { calcOrderTotal, cn } from "@/lib/utils";
 import { formatMoney, convert } from "@/lib/currency";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { updateFinance } from "@/app/orders/[id]/actions";
+import { updateFinance } from "@/app/(crm)/orders/[id]/actions";
 import type { FullOrder } from "@/types/orders";
 
 interface FinanceBlockProps {

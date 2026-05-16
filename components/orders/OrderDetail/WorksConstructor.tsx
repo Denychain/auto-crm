@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ import { MoneyInput } from "@/components/ui/MoneyInput";
 import { formatMoney, convert } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { addWork, updateWork, deleteWork } from "@/app/orders/[id]/actions";
+import { addWork, updateWork, deleteWork } from "@/app/(crm)/orders/[id]/actions";
 
 // ── Row for an existing work item ─────────────────────────────────────────────
 

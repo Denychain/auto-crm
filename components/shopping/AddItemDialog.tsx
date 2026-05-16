@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { Plus, Loader2 } from "lucide-react";
@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { createShoppingItem } from "@/app/shopping/actions";
+import { createShoppingItem } from "@/app/(crm)/shopping/actions";
 
 const QUICK_CHIPS = [
   "Розчинник",

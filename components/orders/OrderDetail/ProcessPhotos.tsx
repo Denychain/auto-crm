@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { viberLink, telegramLink, smsLink, tplProcessUpdate } from "@/lib/messenger";
-import { deletePhoto } from "@/app/orders/[id]/actions";
+import { deletePhoto } from "@/app/(crm)/orders/[id]/actions";
 
 interface ProcessPhotosProps {
   orderId: string;

@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { Currency } from "@prisma/client";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { ExchangeRateDialog } from "@/components/settings/ExchangeRateDialog";
-import { updateSettings, refreshRateFromNBU, setManualRate } from "@/app/settings/actions";
+import { updateSettings, refreshRateFromNBU, setManualRate } from "@/app/(crm)/settings/actions";
 import { cn } from "@/lib/utils";
 import type { ExchangeRate } from "@prisma/client";
 
