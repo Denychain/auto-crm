@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   Trash2,
@@ -371,9 +372,47 @@ function TemplatePicker({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  // Roles that need a worker after applying template
   const [needWorkers, setNeedWorkers] = useState<WorkerRole[]>([]);
   const [addDialogRole, setAddDialogRole] = useState<WorkerRole | undefined>();
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+
+  // Перераховуємо позицію при відкритті
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setDropdownStyle({
+      position: "fixed",
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open, updatePosition]);
+
+  // Закрити при кліку поза
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   function handlePick(templateId: string) {
     setOpen(false);
@@ -385,8 +424,9 @@ function TemplatePicker({
   }
 
   return (
-    <div className="relative">
+    <div>
       <button
+        ref={triggerRef}
         disabled={disabled || isPending}
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground disabled:opacity-40"
@@ -395,43 +435,49 @@ function TemplatePicker({
         {isPending ? (
           <Loader2 className="size-3.5 animate-spin" />
         ) : (
-          <ChevronDown className="size-3.5" />
+          <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
         )}
       </button>
 
-      {open && (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border bg-popover shadow-md">
-          {templates.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => handlePick(t.id)}
-              className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left hover:bg-muted/60"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">{t.name}</span>
-                {t.isDefault && (
-                  <span className="rounded-full bg-primary/15 px-1.5 py-0 text-[10px] font-medium text-primary">
-                    за замовч.
-                  </span>
+      {/* Portal — рендеримо поза картою, щоб уникнути overflow-hidden */}
+      {open && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            style={dropdownStyle}
+            className="overflow-hidden rounded-lg border bg-popover shadow-lg"
+          >
+            {templates.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => handlePick(t.id)}
+                className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left hover:bg-muted/60"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{t.name}</span>
+                  {t.isDefault && (
+                    <span className="rounded-full bg-primary/15 px-1.5 py-0 text-[10px] font-medium text-primary">
+                      за замовч.
+                    </span>
+                  )}
+                </div>
+                {t.description && (
+                  <span className="text-xs text-muted-foreground">{t.description}</span>
                 )}
-              </div>
-              {t.description && (
-                <span className="text-xs text-muted-foreground">{t.description}</span>
-              )}
-              <div className="mt-1 flex gap-1">
-                {t.rules.map((r) => (
-                  <span
-                    key={r.id}
-                    className="rounded bg-muted px-1.5 py-0.5 text-[10px]"
-                  >
-                    {ROLE_LABELS[r.role as WorkerRole]} {r.percent}%
-                  </span>
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+                <div className="mt-1 flex gap-1">
+                  {t.rules.map((r) => (
+                    <span
+                      key={r.id}
+                      className="rounded bg-muted px-1.5 py-0.5 text-[10px]"
+                    >
+                      {ROLE_LABELS[r.role as WorkerRole]} {r.percent}%
+                    </span>
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
 
       {/* Dialogs for missing roles */}
       {needWorkers.map((role) => (
