@@ -7,6 +7,15 @@ import { formatPlate } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import type { WorkerGroup } from "@/lib/finance";
+import { Badge } from "@/components/ui/badge";
+
+const ROLE_LABELS: Record<string, string> = {
+  PREP: "Підготовщик",
+  PAINTER: "Маляр",
+  POLISHER: "Полірувальник",
+  OWNER: "Власник",
+  OTHER: "Інше",
+};
 
 export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -25,10 +34,10 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
 
   const totalWages = groups.reduce((s, g) => s + g.total, 0);
 
-  function toggle(name: string) {
+  function toggle(key: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   }
@@ -37,26 +46,36 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">👷 Виплати майстрам</h2>
-        <span className="text-sm font-bold">{formatMoney(totalWages, displayCurrency)}</span>
+        <span className="text-sm font-bold">
+          {formatMoney(totalWages, displayCurrency)}
+        </span>
       </div>
 
       <div className="overflow-hidden rounded-xl border">
         {groups.map((g) => {
-          const open = expanded.has(g.workerName);
+          // key = workerId if available, else workerName+role
+          const open = expanded.has(g.groupKey);
           return (
-            <div key={g.workerName} className="border-b last:border-0">
+            <div key={g.groupKey} className="border-b last:border-0">
               <button
-                onClick={() => toggle(g.workerName)}
+                onClick={() => toggle(g.groupKey)}
                 className="flex w-full items-center justify-between px-4 py-3 hover:bg-muted/30"
               >
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{g.workerName}</span>
+                  {g.roleLabel && (
+                    <Badge variant="secondary" className="text-xs">
+                      {g.roleLabel}
+                    </Badge>
+                  )}
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums">
                     {g.orders.length} зам.
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">{formatMoney(g.total, displayCurrency)}</span>
+                  <span className="font-bold">
+                    {formatMoney(g.total, displayCurrency)}
+                  </span>
                   {open ? (
                     <ChevronUp className="size-4 text-muted-foreground" />
                   ) : (
@@ -69,7 +88,7 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
                 <div className="border-t bg-muted/10">
                   {g.orders.map((o) => (
                     <Link
-                      key={`${o.orderId}-${g.workerName}`}
+                      key={`${o.orderId}-${g.groupKey}`}
                       href={`/orders/${o.orderId}`}
                       className="flex items-center justify-between px-6 py-2 text-sm hover:bg-muted/30"
                     >
@@ -81,7 +100,9 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
                           {o.clientName}
                         </span>
                       </div>
-                      <span className="shrink-0 font-medium">{formatMoney(o.amount, displayCurrency)}</span>
+                      <span className="shrink-0 font-medium">
+                        {formatMoney(o.amount, displayCurrency)}
+                      </span>
                     </Link>
                   ))}
                 </div>

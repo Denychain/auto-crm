@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { PartStatus, Currency } from "@prisma/client";
+import { PartStatus, Currency, WorkerRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { calcOrderTotal } from "@/lib/utils";
 import { getCurrentRate } from "@/lib/exchange-rate";
@@ -182,9 +182,99 @@ export async function deleteWorkerShare(
 
 // ── Worker share templates ───────────────────────────────────────────────────
 
+/** Повертає список ролей, яких бракує для шаблону (потрібно призначити людину) */
 export async function applyShareTemplate(
   orderId: string,
-  template: "50/50" | "30/30/30"
+  templateId: string
+): Promise<{ needWorkers: WorkerRole[] }> {
+  const [order, template] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id: orderId },
+      include: { works: true, parts: true, workerShares: true },
+    }),
+    prisma.shareTemplate.findUnique({
+      where: { id: templateId },
+      include: { rules: true },
+    }),
+  ]);
+  if (!order || !template) return { needWorkers: [] };
+
+  const partsTotal = order.parts.reduce(
+    (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
+    0
+  );
+  const orderTotal = calcOrderTotal(order.works, order.parts);
+  const base = orderTotal - partsTotal; // залишок на людей
+
+  const needWorkers: WorkerRole[] = [];
+
+  for (const rule of template.rules) {
+    // Знайти існуючий share з відповідною роллю
+    const existing = order.workerShares.find((s) => s.roleSnapshot === rule.role);
+    if (existing) {
+      // Оновити % і перерахувати суму
+      await prisma.workerShare.update({
+        where: { id: existing.id },
+        data: {
+          sharePercent: rule.percent,
+          amount: (base * rule.percent) / 100,
+        },
+      });
+    } else {
+      needWorkers.push(rule.role);
+    }
+  }
+
+  revalidate(orderId);
+  return { needWorkers };
+}
+
+export async function addWorkerShareFromDirectory(
+  orderId: string,
+  workerId: string,
+  role: WorkerRole,
+  sharePercent: number | null,
+  fixedAmount: number | null
+): Promise<void> {
+  const [order, worker] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id: orderId },
+      include: { works: true, parts: true },
+    }),
+    prisma.worker.findUnique({ where: { id: workerId } }),
+  ]);
+  if (!order || !worker) return;
+
+  const partsTotal = order.parts.reduce(
+    (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
+    0
+  );
+  const orderTotal = calcOrderTotal(order.works, order.parts);
+  const base = orderTotal - partsTotal;
+
+  const amount =
+    sharePercent != null ? (base * sharePercent) / 100 : (fixedAmount ?? 0);
+
+  const rate = await getCurrentRate();
+  await prisma.workerShare.create({
+    data: {
+      orderId,
+      workerId,
+      workerName: worker.name,
+      roleSnapshot: role,
+      sharePercent: sharePercent,
+      amount,
+      currency: Currency.UAH,
+      exchangeRate: rate,
+    },
+  });
+  revalidate(orderId);
+}
+
+export async function updateWorkerSharePercent(
+  shareId: string,
+  orderId: string,
+  sharePercent: number
 ): Promise<void> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -192,23 +282,39 @@ export async function applyShareTemplate(
   });
   if (!order) return;
 
-  const total = calcOrderTotal(order.works, order.parts);
-  const slots =
-    template === "50/50"
-      ? [
-          { workerName: "Майстер 1", amount: total / 2 },
-          { workerName: "Майстер 2", amount: total / 2 },
-        ]
-      : [
-          { workerName: "Майстер 1", amount: total / 3 },
-          { workerName: "Майстер 2", amount: total / 3 },
-          { workerName: "Майстер 3", amount: total / 3 },
-        ];
+  const partsTotal = order.parts.reduce(
+    (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
+    0
+  );
+  const base = calcOrderTotal(order.works, order.parts) - partsTotal;
 
-  await prisma.workerShare.deleteMany({ where: { orderId } });
-  await prisma.workerShare.createMany({
-    data: slots.map((s) => ({ orderId, workerName: s.workerName, amount: s.amount })),
+  await prisma.workerShare.update({
+    where: { id: shareId },
+    data: {
+      sharePercent,
+      amount: (base * sharePercent) / 100,
+    },
   });
+  revalidate(orderId);
+}
+
+export async function updateWorkerShareAmount(
+  shareId: string,
+  orderId: string,
+  amount: number
+): Promise<void> {
+  await prisma.workerShare.update({
+    where: { id: shareId },
+    data: { sharePercent: null, amount },
+  });
+  revalidate(orderId);
+}
+
+export async function removeWorkerShare(
+  shareId: string,
+  orderId: string
+): Promise<void> {
+  await prisma.workerShare.delete({ where: { id: shareId } });
   revalidate(orderId);
 }
 

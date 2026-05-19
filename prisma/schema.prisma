@@ -16,6 +16,14 @@ enum Currency {
   UAH
 }
 
+enum WorkerRole {
+  PREP      // підготовщик
+  PAINTER   // маляр
+  POLISHER  // полірувальник
+  OWNER     // власник (окрема роль для % власника)
+  OTHER
+}
+
 enum OrderStatus {
   QUEUE           // 🟡 Черга / Очікування
   DISASSEMBLY     // 🛠 Розбірка/Рихтування
@@ -171,14 +179,55 @@ model OrderPhoto {
 
 // Розподіл фінансів (Зарплати майстрам)
 model WorkerShare {
-  id           String   @id @default(uuid())
+  id           String      @id @default(uuid())
   orderId      String
-  workerName   String   // "Ілля", "Тато", "Вася"
-  amount       Decimal  @db.Decimal(10, 2)
-  currency     Currency @default(UAH)
-  exchangeRate Decimal? @db.Decimal(10, 4)
+  workerName   String      // snapshot імені на момент запису
+  workerId     String?     // зв'язок з довідником Worker (nullable для сумісності)
+  sharePercent Decimal?    @db.Decimal(5, 2)  // % від залишку (null = фіксована сума)
+  roleSnapshot WorkerRole? // роль у цьому замовленні
+  amount       Decimal     @db.Decimal(10, 2)
+  currency     Currency    @default(UAH)
+  exchangeRate Decimal?    @db.Decimal(10, 4)
 
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order        Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  worker       Worker?     @relation(fields: [workerId], references: [id], onDelete: SetNull)
+}
+
+// ==========================================
+// 7. ДОВІДНИК КОМАНДИ
+// ==========================================
+
+model Worker {
+  id           String       @id @default(uuid())
+  name         String
+  roles        WorkerRole[]
+  defaultShare Float?       // дефолтний % (0-100)
+  isActive     Boolean      @default(true)
+  notes        String?
+  sortOrder    Int          @default(0)
+  shares       WorkerShare[]
+  createdAt    DateTime     @default(now())
+}
+
+// ==========================================
+// 8. ШАБЛОНИ РОЗПОДІЛУ
+// ==========================================
+
+model ShareTemplate {
+  id          String              @id @default(uuid())
+  name        String
+  description String?
+  rules       ShareTemplateRule[]
+  isDefault   Boolean             @default(false)
+  sortOrder   Int                 @default(0)
+}
+
+model ShareTemplateRule {
+  id         String        @id @default(uuid())
+  templateId String
+  role       WorkerRole
+  percent    Float
+  template   ShareTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
 
 // ==========================================

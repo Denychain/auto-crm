@@ -68,7 +68,11 @@ export interface OrderPlanFact {
 }
 
 export interface WorkerGroup {
+  /** Унікальний ключ: workerId+role або workerName для legacy записів */
+  groupKey: string;
   workerName: string;
+  /** Мітка ролі (якщо є roleSnapshot) */
+  roleLabel: string | null;
   total: number;
   orders: {
     orderId: string;
@@ -203,13 +207,34 @@ export async function aggregateFinanceData(
     })
     .sort((a, b) => b.diff - a.diff);
 
+  const ROLE_LABELS: Record<string, string> = {
+    PREP: "Підготовщик",
+    PAINTER: "Маляр",
+    POLISHER: "Полірувальник",
+    OWNER: "Власник",
+    OTHER: "Інше",
+  };
+
   const workerMap = new Map<string, WorkerGroup>();
   for (const o of closedOrders) {
     for (const ws of o.workerShares) {
-      if (!workerMap.has(ws.workerName)) {
-        workerMap.set(ws.workerName, { workerName: ws.workerName, total: 0, orders: [] });
+      const role = (ws as { roleSnapshot?: string | null }).roleSnapshot;
+      const workerId = (ws as { workerId?: string | null }).workerId;
+      // Group key: if workerId+role available — use that (so Тато-PAINTER ≠ Тато-OWNER)
+      const groupKey = workerId && role
+        ? `${workerId}::${role}`
+        : ws.workerName;
+
+      if (!workerMap.has(groupKey)) {
+        workerMap.set(groupKey, {
+          groupKey,
+          workerName: ws.workerName,
+          roleLabel: role ? (ROLE_LABELS[role] ?? role) : null,
+          total: 0,
+          orders: [],
+        });
       }
-      const group = workerMap.get(ws.workerName)!;
+      const group = workerMap.get(groupKey)!;
       group.total += toN(ws.amount);
       group.orders.push({
         orderId: o.id,

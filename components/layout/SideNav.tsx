@@ -10,6 +10,8 @@ import {
   ShoppingCart,
   Clock,
   Settings,
+  HardHat,
+  LayoutTemplate,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrencyToggle } from "@/components/ui/CurrencyToggle";
@@ -21,6 +23,8 @@ const NAV_ITEMS = [
   { href: "/finance", label: "Фінанси", icon: Wallet },
   { href: "/shopping", label: "Закупки", icon: ShoppingCart },
   { href: "/backlog", label: "Черга", icon: Clock },
+  { href: "/settings/team", label: "Команда", icon: HardHat },
+  { href: "/settings/share-templates", label: "Шаблони", icon: LayoutTemplate },
   { href: "/settings", label: "Налаштування", icon: Settings },
 ];
 
@@ -47,7 +51,11 @@ export function SideNav({ className }: SideNavProps) {
       <div className="flex flex-col gap-1 p-2">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive =
-            href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
+            href === "/dashboard"
+              ? pathname === "/dashboard"
+              : href === "/settings"
+              ? pathname === "/settings"
+              : pathname.startsWith(href);
 
           return (
             <Link

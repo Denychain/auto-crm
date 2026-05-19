@@ -19,17 +19,27 @@ export default async function OrderDetailPage({
 }) {
   const { id } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: {
-      client: true,
-      vehicle: true,
-      works: { orderBy: { id: "asc" } },
-      parts: { orderBy: { id: "asc" } },
-      photos: { orderBy: { createdAt: "asc" } },
-      workerShares: { orderBy: { id: "asc" } },
-    },
-  });
+  const [order, templates, workers] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id },
+      include: {
+        client: true,
+        vehicle: true,
+        works: { orderBy: { id: "asc" } },
+        parts: { orderBy: { id: "asc" } },
+        photos: { orderBy: { createdAt: "asc" } },
+        workerShares: { orderBy: { id: "asc" } },
+      },
+    }),
+    prisma.shareTemplate.findMany({
+      include: { rules: true },
+      orderBy: [{ isDefault: "desc" }, { sortOrder: "asc" }],
+    }),
+    prisma.worker.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    }),
+  ]);
 
   if (!order) notFound();
 
@@ -48,6 +58,8 @@ export default async function OrderDetailPage({
           orderId={o.id}
           initialShares={o.workerShares as never}
           order={o as never}
+          templates={templates as never}
+          workers={workers as never}
         />
         <ProcessPhotos
           orderId={o.id}
