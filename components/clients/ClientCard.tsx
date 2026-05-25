@@ -58,14 +58,20 @@ export function ClientCard({ id, name, phone, vehicles, orders }: ClientCardProp
           <p className="truncate font-semibold leading-tight">{name}</p>
           <p className="mt-0.5 text-sm text-muted-foreground">{phone}</p>
         </div>
-        <a
-          href={`tel:${phone}`}
-          onClick={(e) => e.stopPropagation()}
+        {/* <a> всередині <Link> = вкладені <a> → заборонено в HTML.
+            Використовуємо <button> з програмним переходом. */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = `tel:${phone}`;
+          }}
           className="shrink-0 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Подзвонити"
         >
           <Phone className="size-4" />
-        </a>
+        </button>
       </div>
 
       {/* Vehicle chips */}
