@@ -142,14 +142,17 @@ export function FloatingCalculator() {
   return (
     <div
       ref={panelRef}
-      className="fixed bottom-20 right-3 z-[60] md:bottom-6"
+      className="fixed bottom-20 left-3 z-[60] md:bottom-6 md:left-auto md:right-3"
     >
       {/* ── Calculator panel ── */}
       {open && (
         <div
           className={cn(
             "mb-3 w-64 rounded-2xl border border-border bg-background shadow-2xl",
-            "animate-in fade-in slide-in-from-bottom-4 duration-200"
+            "animate-in fade-in slide-in-from-bottom-4 duration-200",
+            // На мобілці FAB зліва → панель теж вирівнюємо вліво
+            // На md+ FAB справа → панель вирівнюємо вправо (right-0 за замовч.)
+            "left-0 md:left-auto md:right-0"
           )}
         >
           {/* Header */}
