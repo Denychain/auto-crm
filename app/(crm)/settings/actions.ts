@@ -4,12 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { Currency } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth";
 
 export async function updateSettings(data: {
   displayCurrency?: Currency;
   defaultCurrency?: Currency;
   autoUpdateRate?: boolean;
 }): Promise<void> {
+  await requireAuth();
   await prisma.settings.upsert({
     where: { id: "singleton" },
     update: data,
@@ -25,6 +27,7 @@ export async function updateSettings(data: {
 }
 
 export async function refreshRateFromNBU(): Promise<{ rate: number }> {
+  await requireAuth();
   const rate = await getCurrentRate();
   revalidatePath("/settings");
   revalidatePath("/", "layout");
@@ -32,6 +35,7 @@ export async function refreshRateFromNBU(): Promise<{ rate: number }> {
 }
 
 export async function setManualRate(rate: number): Promise<void> {
+  await requireAuth();
   const { setManualRate: saveRate } = await import("@/lib/exchange-rate");
   await saveRate(rate, new Date());
   revalidatePath("/settings");

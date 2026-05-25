@@ -5,8 +5,10 @@ import { revalidatePath } from "next/cache";
 import { OrderStatus } from "@prisma/client";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
+import { requireAuth } from "@/lib/auth";
 
 export async function moveFromBacklogToActive(orderId: string): Promise<void> {
+  await requireAuth();
   await prisma.order.update({
     where: { id: orderId },
     data: { status: OrderStatus.DISASSEMBLY },
@@ -17,6 +19,7 @@ export async function moveFromBacklogToActive(orderId: string): Promise<void> {
 }
 
 export async function cancelBacklogEntry(orderId: string): Promise<void> {
+  await requireAuth();
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     select: { clientId: true },

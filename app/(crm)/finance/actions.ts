@@ -2,11 +2,13 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth";
 
 export async function createDreamFund(
   goalName: string,
   targetAmount: number
 ): Promise<void> {
+  await requireAuth();
   await prisma.dreamFund.create({
     data: { goalName: goalName.trim(), targetAmount },
   });
@@ -17,6 +19,7 @@ export async function updateDreamFund(
   id: string,
   data: { goalName?: string; targetAmount?: number }
 ): Promise<void> {
+  await requireAuth();
   await prisma.dreamFund.update({
     where: { id },
     data: {
@@ -28,6 +31,7 @@ export async function updateDreamFund(
 }
 
 export async function deleteDreamFund(id: string): Promise<void> {
+  await requireAuth();
   await prisma.dreamFund.delete({ where: { id } });
   revalidatePath("/finance");
 }

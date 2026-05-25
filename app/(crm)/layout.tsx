@@ -8,8 +8,12 @@ import { FloatingCalculator } from "@/components/layout/FloatingCalculator";
 import { prisma } from "@/lib/prisma";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { Currency } from "@prisma/client";
+import { requireAuth } from "@/lib/auth";
+
+export const metadata = { robots: { index: false, follow: false } };
 
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
+  await requireAuth();
   const [settings, rate] = await Promise.all([
     prisma.settings.findUnique({ where: { id: "singleton" } }),
     getCurrentRate().then((r) => r.toNumber()).catch(() => null),

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth";
 
 function revalidate(clientId: string) {
   revalidatePath(`/clients/${clientId}`);
@@ -12,6 +13,7 @@ export async function updateClientNote(
   clientId: string,
   note: string
 ): Promise<void> {
+  await requireAuth();
   await prisma.client.update({
     where: { id: clientId },
     data: { note: note.trim() || null },
@@ -23,6 +25,7 @@ export async function addVehicle(
   clientId: string,
   data: { plate: string; make: string; model: string; year?: number }
 ): Promise<void> {
+  await requireAuth();
   const plate = data.plate.replace(/\s+/g, "").toUpperCase();
   await prisma.vehicle.create({
     data: {
@@ -40,6 +43,7 @@ export async function removeVehicle(
   vehicleId: string,
   clientId: string
 ): Promise<{ error?: string }> {
+  await requireAuth();
   const orderCount = await prisma.order.count({ where: { vehicleId } });
   if (orderCount > 0) {
     return { error: "Не можна видалити авто з замовленнями" };
@@ -50,6 +54,7 @@ export async function removeVehicle(
 }
 
 export async function deleteClient(clientId: string): Promise<{ error?: string }> {
+  await requireAuth();
   const orderCount = await prisma.order.count({ where: { clientId } });
   if (orderCount > 0) {
     return { error: "Не можна видалити клієнта з замовленнями" };

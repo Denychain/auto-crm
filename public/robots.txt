@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /login
+Disallow: /dashboard
+Disallow: /orders
+Disallow: /clients
+Disallow: /vehicles
+Disallow: /finance
+Disallow: /backlog
+Disallow: /shopping
+Disallow: /settings
+Allow: /

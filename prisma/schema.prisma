@@ -206,7 +206,30 @@ model Worker {
   notes        String?
   sortOrder    Int          @default(0)
   shares       WorkerShare[]
+  user         User?
   createdAt    DateTime     @default(now())
+}
+
+// ==========================================
+// 9. АВТЕНТИФІКАЦІЯ
+// ==========================================
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  workerId     String?   @unique
+  worker       Worker?   @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  sessions     Session[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ==========================================

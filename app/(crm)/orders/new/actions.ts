@@ -3,10 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PhotoType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth";
 
 export async function searchVehicleByPlate(
   plate: string
 ): Promise<{ vehicle: { id: string; make: string; model: string; year: number | null }; client: { id: string; name: string; phone: string } } | null> {
+  await requireAuth();
   const vehicle = await prisma.vehicle.findUnique({
     where: { plateNumber: plate.toUpperCase() },
     include: { client: true },
@@ -31,6 +33,7 @@ export async function searchVehicleByPlate(
 export async function searchClientByPhone(
   phone: string
 ): Promise<{ id: string; name: string; phone: string } | null> {
+  await requireAuth();
   const client = await prisma.client.findUnique({
     where: { phone },
   });
@@ -51,6 +54,7 @@ export async function createOrderWithPhotos(data: {
   advancePayment: number;
   photoUrls: string[];
 }): Promise<{ orderId: string }> {
+  await requireAuth();
   // Upsert client by phone
   const client = await prisma.client.upsert({
     where: { phone: data.clientPhone },

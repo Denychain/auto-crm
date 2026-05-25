@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { WorkerRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth";
 
 function revalidate() {
   revalidatePath("/settings/team");
@@ -14,6 +15,7 @@ export async function createWorker(data: {
   defaultShare: number | null;
   notes: string;
 }): Promise<void> {
+  await requireAuth();
   const count = await prisma.worker.count();
   await prisma.worker.create({
     data: {
@@ -37,6 +39,7 @@ export async function updateWorker(
     isActive: boolean;
   }
 ): Promise<void> {
+  await requireAuth();
   await prisma.worker.update({
     where: { id },
     data: {
@@ -51,6 +54,7 @@ export async function updateWorker(
 }
 
 export async function deactivateWorker(id: string): Promise<void> {
+  await requireAuth();
   await prisma.worker.update({
     where: { id },
     data: { isActive: false },
@@ -59,6 +63,7 @@ export async function deactivateWorker(id: string): Promise<void> {
 }
 
 export async function updateWorkerOrder(ids: string[]): Promise<void> {
+  await requireAuth();
   await Promise.all(
     ids.map((id, idx) =>
       prisma.worker.update({ where: { id }, data: { sortOrder: idx } })

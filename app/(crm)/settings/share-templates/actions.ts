@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { WorkerRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth";
 
 function revalidate() {
   revalidatePath("/settings/share-templates");
@@ -14,6 +15,7 @@ export async function createShareTemplate(data: {
   isDefault: boolean;
   rules: { role: WorkerRole; percent: number }[];
 }): Promise<void> {
+  await requireAuth();
   const count = await prisma.shareTemplate.count();
   if (data.isDefault) {
     await prisma.shareTemplate.updateMany({ data: { isDefault: false } });
@@ -39,6 +41,7 @@ export async function updateShareTemplate(
     rules: { role: WorkerRole; percent: number }[];
   }
 ): Promise<void> {
+  await requireAuth();
   if (data.isDefault) {
     await prisma.shareTemplate.updateMany({
       where: { id: { not: id } },
@@ -60,6 +63,7 @@ export async function updateShareTemplate(
 }
 
 export async function deleteShareTemplate(id: string): Promise<void> {
+  await requireAuth();
   await prisma.shareTemplate.delete({ where: { id } });
   revalidate();
 }

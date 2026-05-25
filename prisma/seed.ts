@@ -1,4 +1,5 @@
 import { PrismaClient, OrderStatus, PartStatus, PhotoType } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -557,8 +558,50 @@ async function main() {
   });
   console.log("  ✓ 7 shopping list items");
 
+  await seedOwnerUser();
+
   console.log("\n✅ Seed complete!");
   console.log("   12 clients · 15 vehicles · 15 orders · 2 dream goals · 7 shopping items");
+}
+
+async function seedOwnerUser() {
+  const password = process.env.SEED_OWNER_PASSWORD;
+  if (!password) {
+    console.warn("⚠️  SEED_OWNER_PASSWORD не вказано — seed-користувач пропущено");
+    return;
+  }
+
+  // Знаходимо або створюємо воркера-власника
+  let ownerWorker = await prisma.worker.findFirst({
+    where: { roles: { has: "OWNER" } },
+  });
+
+  if (!ownerWorker) {
+    ownerWorker = await prisma.worker.create({
+      data: {
+        name: "Власник",
+        roles: ["OWNER"],
+        defaultShare: 0,
+        isActive: true,
+        sortOrder: 0,
+      },
+    });
+    console.log(`✅ Створено воркера-власника: ${ownerWorker.name}`);
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  await prisma.user.upsert({
+    where: { email: "owner@nice.car.if" },
+    update: { passwordHash },
+    create: {
+      email: "owner@nice.car.if",
+      passwordHash,
+      workerId: ownerWorker.id,
+    },
+  });
+
+  console.log("✅ Seed-користувач owner@nice.car.if створено/оновлено");
 }
 
 main()

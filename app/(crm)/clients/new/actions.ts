@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth";
 
 export async function createClient(data: {
   name: string;
@@ -9,6 +10,7 @@ export async function createClient(data: {
   note?: string;
   vehicle?: { plate: string; make: string; model: string; year?: number };
 }): Promise<{ clientId: string }> {
+  await requireAuth();
   const client = await prisma.client.create({
     data: {
       name: data.name.trim(),

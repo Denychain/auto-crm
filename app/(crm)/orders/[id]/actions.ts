@@ -5,6 +5,7 @@ import { PartStatus, Currency, WorkerRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { calcOrderTotal } from "@/lib/utils";
 import { getCurrentRate } from "@/lib/exchange-rate";
+import { requireAuth } from "@/lib/auth";
 
 function revalidate(orderId: string) {
   revalidatePath(`/orders/${orderId}`);
@@ -17,6 +18,7 @@ export async function addWork(
   orderId: string,
   data: { name: string; price: number; currency?: Currency }
 ): Promise<void> {
+  await requireAuth();
   const currency = data.currency ?? Currency.UAH;
   const rate = await getCurrentRate();
   await prisma.orderWork.create({
@@ -36,6 +38,7 @@ export async function updateWork(
   orderId: string,
   data: { name: string; price: number; currency?: Currency }
 ): Promise<void> {
+  await requireAuth();
   await prisma.orderWork.update({
     where: { id: workId },
     data: {
@@ -51,6 +54,7 @@ export async function deleteWork(
   workId: string,
   orderId: string
 ): Promise<void> {
+  await requireAuth();
   await prisma.orderWork.delete({ where: { id: workId } });
   revalidate(orderId);
 }
@@ -68,6 +72,7 @@ export async function addPart(
     articleCode?: string;
   }
 ): Promise<void> {
+  await requireAuth();
   const currency = data.currency ?? Currency.UAH;
   const rate = await getCurrentRate();
   await prisma.orderPart.create({
@@ -97,6 +102,7 @@ export async function updatePart(
     articleCode?: string | null;
   }
 ): Promise<void> {
+  await requireAuth();
   await prisma.orderPart.update({
     where: { id: partId },
     data: {
@@ -115,6 +121,7 @@ export async function deletePart(
   partId: string,
   orderId: string
 ): Promise<void> {
+  await requireAuth();
   await prisma.orderPart.delete({ where: { id: partId } });
   revalidate(orderId);
 }
@@ -125,6 +132,7 @@ export async function updateFinance(
   orderId: string,
   data: { totalPaid: number; advancePayment: number; estimatedPrice?: number }
 ): Promise<void> {
+  await requireAuth();
   await prisma.order.update({
     where: { id: orderId },
     data: {
@@ -142,6 +150,7 @@ export async function addWorkerShare(
   orderId: string,
   data: { workerName: string; amount: number; currency?: Currency }
 ): Promise<void> {
+  await requireAuth();
   const currency = data.currency ?? Currency.UAH;
   const rate = await getCurrentRate();
   await prisma.workerShare.create({
@@ -161,6 +170,7 @@ export async function updateWorkerShare(
   orderId: string,
   data: { workerName: string; amount: number; currency?: Currency }
 ): Promise<void> {
+  await requireAuth();
   await prisma.workerShare.update({
     where: { id: shareId },
     data: {
@@ -176,6 +186,7 @@ export async function deleteWorkerShare(
   shareId: string,
   orderId: string
 ): Promise<void> {
+  await requireAuth();
   await prisma.workerShare.delete({ where: { id: shareId } });
   revalidate(orderId);
 }
@@ -187,6 +198,7 @@ export async function applyShareTemplate(
   orderId: string,
   templateId: string
 ): Promise<{ needWorkers: WorkerRole[] }> {
+  await requireAuth();
   const [order, template] = await Promise.all([
     prisma.order.findUnique({
       where: { id: orderId },
@@ -236,6 +248,7 @@ export async function addWorkerShareFromDirectory(
   sharePercent: number | null,
   fixedAmount: number | null
 ): Promise<void> {
+  await requireAuth();
   const [order, worker] = await Promise.all([
     prisma.order.findUnique({
       where: { id: orderId },
@@ -276,6 +289,7 @@ export async function updateWorkerSharePercent(
   orderId: string,
   sharePercent: number
 ): Promise<void> {
+  await requireAuth();
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { works: true, parts: true },
@@ -303,6 +317,7 @@ export async function updateWorkerShareAmount(
   orderId: string,
   amount: number
 ): Promise<void> {
+  await requireAuth();
   await prisma.workerShare.update({
     where: { id: shareId },
     data: { sharePercent: null, amount },
@@ -314,6 +329,7 @@ export async function removeWorkerShare(
   shareId: string,
   orderId: string
 ): Promise<void> {
+  await requireAuth();
   await prisma.workerShare.delete({ where: { id: shareId } });
   revalidate(orderId);
 }
@@ -324,6 +340,7 @@ export async function deletePhoto(
   photoId: string,
   orderId: string
 ): Promise<void> {
+  await requireAuth();
   await prisma.orderPhoto.delete({ where: { id: photoId } });
   revalidate(orderId);
 }
