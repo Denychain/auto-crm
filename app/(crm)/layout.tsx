@@ -1,5 +1,6 @@
 import { BottomNav } from "@/components/layout/BottomNav";
 import { SideNav } from "@/components/layout/SideNav";
+import { MobileSettingsMenu } from "@/components/layout/MobileSettingsMenu";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -25,9 +26,18 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
       <OfflineBanner />
       <div className="flex h-full">
         <SideNav className="hidden md:flex" />
-        <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
-          {children}
-        </main>
+
+        {/* Мобільний wrapper: тонка шапка з кнопкою налаштувань + контент */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Шапка тільки на мобільному — прихована на md+ де є SideNav */}
+          <div className="flex h-12 shrink-0 items-center justify-end border-b border-border px-3 md:hidden">
+            <MobileSettingsMenu />
+          </div>
+
+          <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+            {children}
+          </main>
+        </div>
       </div>
       <BottomNav className="md:hidden" />
       <FloatingCalculator />
