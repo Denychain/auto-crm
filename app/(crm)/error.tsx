@@ -29,7 +29,7 @@ export default function GlobalError({
       <div className="flex gap-3">
         <Button onClick={() => unstable_retry()}>Спробувати ще</Button>
         <Button variant="outline" asChild>
-          <a href="/">На головну</a>
+          <a href="/dashboard">На головну</a>
         </Button>
       </div>
     </div>

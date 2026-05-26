@@ -71,6 +71,28 @@ function WorkerRow({
   const [localAmt, setLocalAmt] = useState(Number(share.amount).toFixed(2));
   const [usePercent, setUsePercent] = useState(isPercent);
 
+  // B05: sync local state when share prop changes (e.g. after template application)
+  // Only update if the field is not currently focused to avoid interrupting user typing
+  const pctFocused = useRef(false);
+  const amtFocused = useRef(false);
+  const prevShareRef = useRef(share);
+  useEffect(() => {
+    const prev = prevShareRef.current;
+    prevShareRef.current = share;
+    if (
+      share.sharePercent !== prev.sharePercent ||
+      share.amount !== prev.amount
+    ) {
+      if (!pctFocused.current) {
+        setLocalPct(share.sharePercent != null ? String(share.sharePercent) : "");
+      }
+      if (!amtFocused.current) {
+        setLocalAmt(Number(share.amount).toFixed(2));
+      }
+      setUsePercent(share.sharePercent != null);
+    }
+  }, [share]);
+
   // computed display amount when in % mode
   const computedAmount = usePercent
     ? (base * (parseFloat(localPct) || 0)) / 100
@@ -135,7 +157,8 @@ function WorkerRow({
             step="0.5"
             value={localPct}
             onChange={(e) => setLocalPct(e.target.value)}
-            onBlur={handleBlurPct}
+            onFocus={() => { pctFocused.current = true; }}
+            onBlur={() => { pctFocused.current = false; handleBlurPct(); }}
             disabled={disabled}
             className="w-16 text-right text-sm px-2"
             placeholder="%"
@@ -151,7 +174,8 @@ function WorkerRow({
           step="0.01"
           value={localAmt}
           onChange={(e) => setLocalAmt(e.target.value)}
-          onBlur={handleBlurAmt}
+          onFocus={() => { amtFocused.current = true; }}
+          onBlur={() => { amtFocused.current = false; handleBlurAmt(); }}
           disabled={disabled}
           className="w-28 text-right text-sm"
           placeholder="₴"
@@ -526,7 +550,8 @@ export function WorkerShares({
       s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
     0
   );
-  const base = orderTotal - partsTotal; // залишок на людей
+  // B06: base = actual received money minus actual material cost
+  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
   const distributed = initialShares.reduce((s, sh) => s + Number(sh.amount), 0);
   const diff = distributed - base;
   const overDistributed = diff > 0.01;

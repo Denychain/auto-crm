@@ -17,7 +17,7 @@ import { StatusBadge } from "@/components/orders/StatusBadge";
 import { STATUS_LABELS } from "@/lib/constants";
 import { updateOrderStatus } from "@/app/(crm)/orders/actions";
 import { calcIdleDays, isOverdue, cn } from "@/lib/utils";
-import { viberLink, telegramLink } from "@/lib/messenger";
+import { viberLink, telegramLinkByPhone } from "@/lib/messenger";
 import type { FullOrder } from "@/types/orders";
 
 const STATUS_ORDER: OrderStatus[] = [
@@ -54,7 +54,7 @@ export function OrderHeader({ order }: { order: FullOrder }) {
   }
 
   const viberMsg = viberLink(order.client.phone, `Доброго дня, ${order.client.name}!`);
-  const tgMsg = telegramLink(`Доброго дня, ${order.client.name}!`);
+  const tgMsg = telegramLinkByPhone(order.client.phone);
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background">
@@ -96,7 +96,9 @@ export function OrderHeader({ order }: { order: FullOrder }) {
             <a
               href={tgMsg}
               className="text-sky-500 hover:underline"
-              title="Telegram"
+              title="Відкриється, якщо встановлений Telegram"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
             >
               TG

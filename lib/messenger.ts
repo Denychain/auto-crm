@@ -7,6 +7,21 @@ export function viberLink(phone: string, text: string): string {
   return `viber://chat?number=${cleanPhone}&text=${encode(text)}`;
 }
 
+/**
+ * Generates a Telegram deep-link to open a chat by phone number.
+ * tg://resolve?phone=... works on devices with Telegram installed.
+ */
+export function telegramLinkByPhone(phone: string): string {
+  const clean = phone.replace(/\D/g, "");
+  return `tg://resolve?phone=${clean}`;
+}
+
+export function telegramFallbackLink(phone: string): string {
+  const clean = phone.replace(/\D/g, "");
+  return `https://t.me/+${clean}`;
+}
+
+// Keep the old function for sharing text (different use case)
 export function telegramLink(text: string): string {
   return `https://t.me/share/url?text=${encode(text)}`;
 }

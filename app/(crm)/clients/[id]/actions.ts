@@ -55,11 +55,15 @@ export async function removeVehicle(
 
 export async function deleteClient(clientId: string): Promise<{ error?: string }> {
   await requireAuth();
-  const orderCount = await prisma.order.count({ where: { clientId } });
-  if (orderCount > 0) {
-    return { error: "Не можна видалити клієнта з замовленнями" };
+  try {
+    await prisma.client.update({
+      where: { id: clientId },
+      data: { deletedAt: new Date() },
+    });
+    revalidatePath("/clients");
+    return {};
+  } catch (e) {
+    console.error("[deleteClient]", e);
+    return { error: "Не вдалося видалити клієнта. Спробуйте ще раз." };
   }
-  await prisma.client.delete({ where: { id: clientId } });
-  revalidatePath("/clients");
-  return {};
 }

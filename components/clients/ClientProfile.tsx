@@ -17,7 +17,7 @@ import { StatusBadge } from "@/components/orders/StatusBadge";
 import { formatPlate, calcOrderTotal } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { viberLink, telegramLink, smsLink } from "@/lib/messenger";
+import { viberLink, telegramLinkByPhone, smsLink } from "@/lib/messenger";
 import {
   updateClientNote,
   addVehicle,
@@ -188,7 +188,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
   const { displayCurrency } = useCurrency();
 
   const viberHref = viberLink(phone, `Доброго дня, ${name}!`);
-  const tgHref = telegramLink(`Доброго дня, ${name}!`);
+  const tgHref = telegramLinkByPhone(phone);
   const smsHref = smsLink(phone, `Доброго дня, ${name}!`);
 
   const filteredOrders = orders.filter((o) => {
@@ -255,6 +255,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
             Viber
           </a>
           <a href={tgHref} target="_blank" rel="noopener noreferrer"
+            title="Відкриється, якщо встановлений Telegram"
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium text-sky-600 hover:bg-sky-50">
             Telegram
           </a>

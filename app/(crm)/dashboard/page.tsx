@@ -62,7 +62,7 @@ export default async function HomePage() {
       prisma.order.count({
         where: { status: OrderStatus.QUEUE, advancePayment: { gt: 0 } },
       }),
-      prisma.client.count(),
+      prisma.client.count({ where: { deletedAt: null } }),
       prisma.settings.findUnique({ where: { id: "singleton" } }),
     ]);
 

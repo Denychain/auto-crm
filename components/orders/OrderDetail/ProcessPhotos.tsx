@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { viberLink, telegramLink, smsLink, tplProcessUpdate } from "@/lib/messenger";
+import { viberLink, telegramLinkByPhone, smsLink, tplProcessUpdate } from "@/lib/messenger";
 import { deletePhoto } from "@/app/(crm)/orders/[id]/actions";
 
 interface ProcessPhotosProps {
@@ -165,7 +165,7 @@ export function ProcessPhotos({
 
   const sendMessage = tplProcessUpdate(sendPhoto?.description ?? "роботи");
   const viberHref = viberLink(clientPhone, sendMessage);
-  const tgHref = telegramLink(sendMessage);
+  const tgHref = telegramLinkByPhone(clientPhone);
   const smsHref = smsLink(clientPhone, sendMessage);
 
   return (
@@ -287,6 +287,7 @@ export function ProcessPhotos({
               href={tgHref}
               target="_blank"
               rel="noopener noreferrer"
+              title="Відкриється, якщо встановлений Telegram"
               className="flex items-center justify-center gap-2 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-600"
             >
               Telegram

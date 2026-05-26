@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { PartStatus, Currency, WorkerRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { calcOrderTotal } from "@/lib/utils";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { requireAuth } from "@/lib/auth";
 
@@ -215,8 +214,8 @@ export async function applyShareTemplate(
     (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
     0
   );
-  const orderTotal = calcOrderTotal(order.works, order.parts);
-  const base = orderTotal - partsTotal; // залишок на людей
+  // B06: base = actual received money minus actual material cost
+  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
 
   const needWorkers: WorkerRole[] = [];
 
@@ -262,8 +261,8 @@ export async function addWorkerShareFromDirectory(
     (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
     0
   );
-  const orderTotal = calcOrderTotal(order.works, order.parts);
-  const base = orderTotal - partsTotal;
+  // B06: base = actual received money minus actual material cost
+  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
 
   const amount =
     sharePercent != null ? (base * sharePercent) / 100 : (fixedAmount ?? 0);
@@ -300,7 +299,8 @@ export async function updateWorkerSharePercent(
     (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
     0
   );
-  const base = calcOrderTotal(order.works, order.parts) - partsTotal;
+  // B06: base = actual received money minus actual material cost
+  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
 
   await prisma.workerShare.update({
     where: { id: shareId },

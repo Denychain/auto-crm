@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { OrderStatus, PhotoType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth";
+import { getCurrentRate } from "@/lib/exchange-rate";
 
 export async function searchVehicleByPlate(
   plate: string
@@ -75,6 +76,9 @@ export async function createOrderWithPhotos(data: {
     update: {},
   });
 
+  // B08: fetch current exchange rate to store at order creation time
+  const baseExchangeRate = await getCurrentRate();
+
   // Create order
   const order = await prisma.order.create({
     data: {
@@ -85,6 +89,7 @@ export async function createOrderWithPhotos(data: {
       estimatedPrice: data.estimatedPrice,
       advancePayment: data.advancePayment,
       totalPaid: 0,
+      baseExchangeRate,
     },
   });
 

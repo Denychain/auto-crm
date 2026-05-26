@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { viberLink, telegramLink, smsLink, tplCallToService } from "@/lib/messenger";
+import { viberLink, telegramLinkByPhone, smsLink, tplCallToService } from "@/lib/messenger";
 import { moveFromBacklogToActive } from "@/app/(crm)/backlog/actions";
 
 interface CallDialogProps {
@@ -166,7 +166,7 @@ export function CallDialog({
             variant="outline"
             className="border-sky-300 text-sky-700 hover:bg-sky-50"
             disabled={isPending}
-            onClick={() => handleOpenMessenger(telegramLink(text))}
+            onClick={() => handleOpenMessenger(telegramLinkByPhone(phone))}
           >
             Telegram
           </Button>

@@ -30,7 +30,7 @@ export default async function ClientDetailPage({
     },
   });
 
-  if (!client) notFound();
+  if (!client || client.deletedAt) notFound();
 
   return (
     <div className="flex min-h-full flex-col">

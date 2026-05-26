@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useId } from "react";
+import { useRef, useState, useId, useEffect } from "react";
 import { Currency } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { convert } from "@/lib/currency";
@@ -16,6 +16,18 @@ interface MoneyInputProps {
   disabled?: boolean;
   className?: string;
   id?: string;
+}
+
+// Format number for display: spaces as thousands separator
+function formatDisplay(n: number): string {
+  if (!n) return "";
+  return Math.round(n * 100) / 100 === 0
+    ? ""
+    : n.toFixed(2).replace(/\.00$/, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function parseInput(s: string): number {
+  return parseFloat(s.replace(/\s/g, "").replace(",", ".")) || 0;
 }
 
 export function MoneyInput({
@@ -35,17 +47,18 @@ export function MoneyInput({
   const [showHint, setShowHint] = useState(false);
   const [pendingCurrency, setPendingCurrency] = useState<Currency | null>(null);
 
-  // Format number for display: spaces as thousands separator
-  function formatDisplay(n: number): string {
-    if (!n) return "";
-    return Math.round(n * 100) / 100 === 0
-      ? ""
-      : n.toFixed(2).replace(/\.00$/, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  }
+  // B01: controlled local display state — avoids key={value} unmount on each keystroke
+  const [localDisplay, setLocalDisplay] = useState(() => formatDisplay(value));
+  const isFocused = useRef(false);
+  const prevValueRef = useRef(value);
 
-  function parseInput(s: string): number {
-    return parseFloat(s.replace(/\s/g, "").replace(",", ".")) || 0;
-  }
+  // Sync external value → localDisplay only when the input is NOT focused
+  useEffect(() => {
+    if (!isFocused.current && value !== prevValueRef.current) {
+      prevValueRef.current = value;
+      setLocalDisplay(formatDisplay(value));
+    }
+  }, [value]);
 
   function handleCurrencyChange(newCurrency: Currency) {
     if (newCurrency === currency) return;
@@ -83,6 +96,7 @@ export function MoneyInput({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       <div className="flex h-9 overflow-hidden rounded-md border border-input bg-background ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        {/* B01: removed key={value} and defaultValue; use controlled value + localDisplay */}
         <input
           ref={inputRef}
           id={inputId}
@@ -90,11 +104,20 @@ export function MoneyInput({
           inputMode="decimal"
           disabled={disabled}
           placeholder={placeholder}
-          defaultValue={formatDisplay(value)}
-          key={value}
-          onFocus={(e) => e.target.select()}
+          value={localDisplay}
+          onFocus={(e) => {
+            isFocused.current = true;
+            prevValueRef.current = value;
+            e.target.select();
+          }}
+          onBlur={() => {
+            isFocused.current = false;
+            prevValueRef.current = value;
+          }}
           onChange={(e) => {
-            const v = parseInput(e.target.value);
+            const text = e.target.value;
+            setLocalDisplay(text);
+            const v = parseInput(text);
             onChange(v, currency);
           }}
           className="flex-1 bg-transparent px-3 py-1 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"

@@ -1,6 +1,6 @@
 import { Phone, MessageCircle, Car, User, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { viberLink, telegramLink, smsLink, tplReadyToPickup } from "@/lib/messenger";
+import { viberLink, telegramLinkByPhone, smsLink, tplReadyToPickup } from "@/lib/messenger";
 import type { FullOrder } from "@/types/orders";
 
 export function VehicleClientInfo({ order }: { order: FullOrder }) {
@@ -55,7 +55,10 @@ export function VehicleClientInfo({ order }: { order: FullOrder }) {
             Viber
           </a>
           <a
-            href={telegramLink(msg)}
+            href={telegramLinkByPhone(client.phone)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Відкриється, якщо встановлений Telegram"
             className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
           >
             <MessageCircle className="size-3.5 text-blue-500" />
