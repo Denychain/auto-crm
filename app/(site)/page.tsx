@@ -267,6 +267,7 @@ export default function LandingPage() {
                   <span>Дивитися приклади робіт</span>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
+                <span className="note">// Портфоліо робіт в цеху</span>
               </div>
             </div>
 
@@ -385,6 +386,7 @@ export default function LandingPage() {
           {/* Bottom CTA */}
           <div className="svc-cta">
             <div className="svc-cta-text">
+              <span className="k">// Не впевнені, що саме вам потрібно?</span>
               <h4>Розкажіть про проблему — підкажемо, що робити.</h4>
             </div>
             <a href="tel:+380992334420" className="btn btn--primary">
@@ -434,6 +436,7 @@ export default function LandingPage() {
                 <span className="step-num">01</span>
               </div>
               <div className="step-title">Оцінка та бюджет</div>
+              <div className="step-gist">// Не їдьте дарма</div>
               <p className="step-body">Надішліть фото пошкоджень у <em>Viber</em> або <em>Telegram</em>. Назвемо орієнтовну вилку цін. Якщо порядок цифр підходить — домовляємось про огляд.</p>
             </li>
 
@@ -442,6 +445,7 @@ export default function LandingPage() {
                 <span className="step-num">02</span>
               </div>
               <div className="step-title">Запис у чергу</div>
+              <div className="step-gist">// Ми затребувані</div>
               <p className="step-body">Узгоджуємо дату. Ви потрапляєте в графік. Ніяких «живих черг» і спонтанних візитів — це поважає і ваш, і наш час.</p>
             </li>
 
@@ -450,6 +454,7 @@ export default function LandingPage() {
                 <span className="step-num">03</span>
               </div>
               <div className="step-title">Дзвінок «за 24 години»</div>
+              <div className="step-gist">// Контроль в&apos;їзду</div>
               <p className="step-body"><em>Не приганяйте авто навмання.</em> Ми самі зателефонуємо за день до початку робіт, коли місце звільниться. Тільки після цього дзвінка — ви їдете до нас.</p>
             </li>
 
@@ -458,6 +463,7 @@ export default function LandingPage() {
                 <span className="step-num">04</span>
               </div>
               <div className="step-title">Завдаток і старт</div>
+              <div className="step-gist">// Фінансова гарантія</div>
               <p className="step-body">При передачі ключів — завдаток на матеріали та запчастини. Робота починається тільки після передоплати: ваша гарантія серйозності, наша — закупівля якісних компонентів.</p>
             </li>
 
@@ -466,6 +472,7 @@ export default function LandingPage() {
                 <span className="step-num">05</span>
               </div>
               <div className="step-title">Технологічний процес</div>
+              <div className="step-gist">// Не підганяйте нас</div>
               <p className="step-body">Дотримуємось часу висихання шпаклівки, ґрунту та лаку. Якщо технологія вимагає 12 годин сушки — ми чекаємо 12 годин. <em>Якість не терпить поспіху.</em></p>
             </li>
 
@@ -474,6 +481,7 @@ export default function LandingPage() {
                 <span className="step-num">06</span>
               </div>
               <div className="step-title">Видача та зберігання</div>
+              <div className="step-gist">// Забирайте вчасно</div>
               <p className="step-body">Повідомляємо про готовність. <em>3 дні</em> на безкоштовне зберігання. Далі — плата за стоянку: нам потрібне місце для наступного клієнта.</p>
             </li>
 
@@ -637,6 +645,7 @@ export default function LandingPage() {
           {/* Bottom CTA */}
           <div className="pr-cta">
             <div className="lhs">
+              <span className="k">// Хочете точну цифру?</span>
               <h4>Надішліть фото пошкодження — порахуємо за пару годин.</h4>
             </div>
             <div className="rhs">
@@ -974,6 +983,7 @@ export default function LandingPage() {
             <div className="rep-google">
               <div className="stars" aria-label="5 з 5">★ ★ ★ ★ ★</div>
               <div className="text">
+                <span className="k">// Прозоро · Незалежно</span>
                 <h4>Почитайте відгуки наших клієнтів на <em>Google Maps</em>.</h4>
               </div>
               <a href={CONTACTS.googleMaps} target="_blank" rel="noopener" className="btn btn--primary">
@@ -987,6 +997,7 @@ export default function LandingPage() {
                 <QrCode value={CONTACTS.googleMaps} size={128} />
               </div>
               <div className="qr-info">
+                <span className="k">// Вже були у нас?</span>
                 <h4>Наведіть камеру, щоб залишити відгук</h4>
                 <span className="hint">Перейдете на Google Maps</span>
               </div>
@@ -1167,6 +1178,7 @@ export default function LandingPage() {
           </div>
 
           <div className="faq-foot">
+            <span className="k">// Не знайшли відповідь?</span>
             <p>Напишіть у <strong>Telegram</strong> або <strong>Viber</strong> — відповімо за пару годин у робочий час.</p>
           </div>
 
@@ -1208,6 +1220,7 @@ export default function LandingPage() {
             <div className="footer-col footer-contacts">
               <h5>Зв&apos;язок</h5>
               <div className="footer-phone">
+                <span className="k">// Подзвонити Майстру Дмитру</span>
                 <a href="tel:+380992334420">+380 99 233 44 20</a>
               </div>
 
