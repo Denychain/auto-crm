@@ -17,7 +17,7 @@ const DAYS = [
   { name: "СР", h: CONTACTS.hours.weekdays,  closed: false },
   { name: "ЧТ", h: CONTACTS.hours.weekdays,  closed: false },
   { name: "ПТ", h: CONTACTS.hours.weekdays,  closed: false },
-  { name: "СБ", h: CONTACTS.hours.saturday,  closed: false },
+  { name: "СБ", h: CONTACTS.hours.saturday,  closed: true  },
 ];
 
 const FAQ = [
@@ -74,9 +74,7 @@ export default function ContactsPage() {
     const now = new Date();
     const d   = now.getDay();   // 0=Sun … 6=Sat
     const hh  = now.getHours();
-    const open =
-      (d >= 1 && d <= 5 && hh >= 9 && hh < 18) ||
-      (d === 6 && hh >= 9 && hh < 14);
+    const open = (d >= 1 && d <= 5 && hh >= 10 && hh < 18);
     setIsOpen(open);
     setToday(d);
   }, []);
@@ -117,7 +115,7 @@ export default function ContactsPage() {
             <a href="/">Головна</a>
             <a href="/#us-cars">Авто з США</a>
             <a href="/gallery">Галерея</a>
-            <a href="/#about-master">Про майстра</a>
+            <a href="/master">Про майстра</a>
             <a href="/contacts" className="active">Контакти</a>
           </nav>
 
@@ -141,7 +139,7 @@ export default function ContactsPage() {
         <a href="/" onClick={() => setMenuOpen(false)}><span>Головна</span><span className="num">01 / 05</span></a>
         <a href="/#us-cars" onClick={() => setMenuOpen(false)}><span>Авто з США</span><span className="num">02 / 05</span></a>
         <a href="/gallery" onClick={() => setMenuOpen(false)}><span>Галерея</span><span className="num">03 / 05</span></a>
-        <a href="/#about-master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
+        <a href="/master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
         <a href="/contacts" onClick={() => setMenuOpen(false)}><span>Контакти</span><span className="num">05 / 05</span></a>
         <a href={`tel:${CONTACTS.phone}`} className="m-phone" onClick={() => setMenuOpen(false)}>
           <small>Подзвонити Майстру Дмитру</small>
@@ -204,7 +202,7 @@ export default function ContactsPage() {
                 <span className="lbl">Телефон / WhatsApp</span>
                 <a href={`tel:${CONTACTS.phone}`}>{CONTACTS.phone}</a>
                 <span className="hint">
-                  Пн–Пт <em>09:00–18:00</em> · Сб <em>09:00–14:00</em> · Нд — вихідний
+                  Пн–Пт <em>{CONTACTS.hours.weekdays}</em> · Сб–Нд — вихідний
                 </span>
               </div>
 
@@ -466,7 +464,16 @@ export default function ContactsPage() {
 
               {formSent ? (
                 <div className="form-status is-visible">
-                  ✓ Заявку отримано — відповімо протягом кількох годин. Дякуємо!
+                  Дякуємо за звернення! Форма ще в розробці — будь ласка,{" "}
+                  <strong>зателефонуйте</strong> на{" "}
+                  <a href={`tel:${CONTACTS.phone}`} style={{ color: "var(--accent)" }}>
+                    +380 99 233 44 20
+                  </a>{" "}
+                  або{" "}
+                  <a href={CONTACTS.telegram} target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>
+                    напишіть у Telegram
+                  </a>{" "}
+                  — там точно побачимо ваше повідомлення.
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} noValidate>
@@ -581,7 +588,7 @@ export default function ContactsPage() {
                   </svg>
                   <div className="body">
                     <strong>+380 99 233 44 20</strong>
-                    <small>Дзвінок · Пн–Пт 09–18</small>
+                    <small>Дзвінок · Пн–Пт 10–18</small>
                   </div>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <line x1="5" y1="12" x2="19" y2="12"/>
@@ -718,7 +725,7 @@ export default function ContactsPage() {
                 <li><a href="/">Головна</a></li>
                 <li><a href="/#us-cars">Авто з США</a></li>
                 <li><a href="/gallery">Галерея</a></li>
-                <li><a href="/#about-master">Про майстра</a></li>
+                <li><a href="/master">Про майстра</a></li>
               </ul>
             </div>
 

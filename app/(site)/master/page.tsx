@@ -14,7 +14,7 @@ const JOURNEY = [
     title: "Учень рихтувальника",
     body: (
       <>
-        Перший рік у цеху мого вуйка. Підмітав підлогу, готував шпаклівку, носив бамперів.{" "}
+        Перший рік у майстерні дядька. Підмітав підлогу, готував шпаклівку, носив бамперів.{" "}
         <em>Зрозумів</em>, що метал має пам&#x2019;ять — і поспіх вертається тріщинами через рік.
       </>
     ),
@@ -738,9 +738,9 @@ export default function MasterPage() {
             <div className="footer-col">
               <h5>Графік</h5>
               <ul className="footer-nav-mini" style={{ fontFamily: "var(--font-mono)", fontSize: "12px" }}>
-                <li style={{ color: "var(--ink-1)" }}><span>Пн–Пт · 09–18</span></li>
-                <li style={{ color: "var(--ink-1)" }}><span>Сб · 09–14</span></li>
-                <li style={{ color: "var(--ink-3)" }}><span>Нд · вихідний</span></li>
+                <li style={{ color: "var(--ink-1)" }}><span>Пн–Пт · {CONTACTS.hours.weekdays}</span></li>
+                <li style={{ color: "var(--ink-3)" }}><span>Сб · {CONTACTS.hours.saturday}</span></li>
+                <li style={{ color: "var(--ink-3)" }}><span>Нд · {CONTACTS.hours.sunday}</span></li>
               </ul>
             </div>
           </div>

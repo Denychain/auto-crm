@@ -11,8 +11,8 @@ export const CONTACTS = {
   addressHint:
     "Навпроти заправки ОККО — наліво, перший поворот з об'їзної.",
   hours: {
-    weekdays: "09:00 — 18:00",
-    saturday: "09:00 — 14:00",
+    weekdays: "10:00 — 18:00",
+    saturday: "Вихідний",
     sunday: "Вихідний",
   },
 };

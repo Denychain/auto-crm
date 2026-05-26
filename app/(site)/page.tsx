@@ -75,16 +75,16 @@ export default function LandingPage() {
       {/* HEADER */}
       <header className={`site-header${scrolled ? " is-scrolled" : ""}`} id="header">
         <div className="container">
-          <a href="#" className="logo" aria-label="NICE.car.if">
+          <a href="/" className="logo" aria-label="NICE.car.if">
             <span>nice</span><span className="dot">.</span><span>car</span><span className="dot">.</span><span className="accent">if</span>
           </a>
 
           <nav className="nav" aria-label="Головна навігація">
             <a href="#hero" className="active">Головна</a>
-            <a href="#us-cars">Авто з США</a>
+            <a href="/us-cars">Авто з США</a>
             <a href="/gallery">Галерея</a>
-            <a href="#about-master">Про майстра</a>
-            <a href="#contacts">Контакти</a>
+            <a href="/master">Про майстра</a>
+            <a href="/contacts">Контакти</a>
           </nav>
 
           <span className="header-divider" aria-hidden={true}></span>
@@ -103,10 +103,10 @@ export default function LandingPage() {
       {/* MOBILE MENU */}
       <div className={`mobile-menu${menuOpen ? " is-open" : ""}`} aria-hidden={!menuOpen}>
         <a href="#hero" onClick={() => setMenuOpen(false)}><span>Головна</span><span className="num">01 / 05</span></a>
-        <a href="#us-cars" onClick={() => setMenuOpen(false)}><span>Авто з США</span><span className="num">02 / 05</span></a>
+        <a href="/us-cars" onClick={() => setMenuOpen(false)}><span>Авто з США</span><span className="num">02 / 05</span></a>
         <a href="/gallery" onClick={() => setMenuOpen(false)}><span>Галерея</span><span className="num">03 / 05</span></a>
-        <a href="#about-master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
-        <a href="#contacts" onClick={() => setMenuOpen(false)}><span>Контакти</span><span className="num">05 / 05</span></a>
+        <a href="/master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
+        <a href="/contacts" onClick={() => setMenuOpen(false)}><span>Контакти</span><span className="num">05 / 05</span></a>
         <a href="tel:+380992334420" className="m-phone" onClick={() => setMenuOpen(false)}>
           <small>Подзвонити Майстру Дмитру</small>
           +380 99 233 44 20
@@ -211,7 +211,6 @@ export default function LandingPage() {
       </section>
 
       {/* 02 · ФІЛОСОФІЯ / ПРО МАЙСТРА */}
-      <span id="about-master" style={{ display: "block", visibility: "hidden", height: 0 }} aria-hidden={true} />
       <section className="philosophy" id="philosophy">
         <div className="container">
 
@@ -1306,7 +1305,7 @@ export default function LandingPage() {
               <h5>Правила сервісу</h5>
               <ul className="footer-rules">
                 <li>Робота тільки за <strong>попереднім записом</strong>. Без дзвінка-підтвердження — не приїжджайте.</li>
-                <li>Адміністрація <strong>не несе відповідальності</strong> за цінні речі, залишені в салоні.</li>
+                <li>Просимо <strong>забрати цінні речі з салону</strong> перед передачею ключів.</li>
                 <li><em>Увага:</em> безкоштовне зберігання готового авто — <strong>3 доби</strong>. Далі нараховується плата за стоянку.</li>
                 <li>Гарантія на фарбування нових деталей — <strong>1 рік</strong>. На реставрацію — гарантуємо дотримання технології.</li>
               </ul>
@@ -1316,18 +1315,13 @@ export default function LandingPage() {
 
           {/* Bottom bar */}
           <div className="footer-bottom">
-            <span>© 2026 NICE.car.if · Всі права захищено.</span>
+            <span>© {new Date().getFullYear()} NICE.car.if · Всі права захищено.</span>
             <div className="links">
               <a href="#">Політика приватності</a>
               <a href="#">Умови сервісу</a>
               <a href="mailto:nicecarif@gmail.com">nicecarif@gmail.com</a>
             </div>
           </div>
-
-          {/* SEO keywords */}
-          <p className="seo-keywords" aria-hidden={true}>
-            Кузовний ремонт Івано-Франківськ · рихтування авто · фарбування в камері · пайка бамперів · полірування фар · видалення вм&apos;ятин · авто з США під ключ Франківськ · підбір кольору ксиралік · реставрація геометрії · СТО Івано-Франківськ · фарбування авто за заводським стандартом · колорист IF.
-          </p>
 
         </div>
       </footer>

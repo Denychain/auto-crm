@@ -264,7 +264,7 @@ export default function UsCarsPage() {
             <a href="/">Головна</a>
             <a href="/us-cars" className="active">Авто з США</a>
             <a href="/gallery">Галерея</a>
-            <a href="/#about-master">Про майстра</a>
+            <a href="/master">Про майстра</a>
             <a href="/contacts">Контакти</a>
           </nav>
 
@@ -288,7 +288,7 @@ export default function UsCarsPage() {
         <a href="/" onClick={() => setMenuOpen(false)}><span>Головна</span><span className="num">01 / 05</span></a>
         <a href="/us-cars" onClick={() => setMenuOpen(false)}><span>Авто з США</span><span className="num">02 / 05</span></a>
         <a href="/gallery" onClick={() => setMenuOpen(false)}><span>Галерея</span><span className="num">03 / 05</span></a>
-        <a href="/#about-master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
+        <a href="/master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
         <a href="/contacts" onClick={() => setMenuOpen(false)}><span>Контакти</span><span className="num">05 / 05</span></a>
         <a href={`tel:${CONTACTS.phone}`} className="m-phone" onClick={() => setMenuOpen(false)}>
           <small>Подзвонити Майстру Дмитру</small>
@@ -695,7 +695,7 @@ export default function UsCarsPage() {
                 <li><a href="/">Головна</a></li>
                 <li><a href="/us-cars">Авто з США</a></li>
                 <li><a href="/gallery">Галерея</a></li>
-                <li><a href="/#about-master">Про майстра</a></li>
+                <li><a href="/master">Про майстра</a></li>
               </ul>
             </div>
 
@@ -712,9 +712,9 @@ export default function UsCarsPage() {
             <div className="footer-col">
               <h5>Графік</h5>
               <ul className="footer-nav-mini" style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
-                <li style={{ color: "var(--ink-1)" }}><a style={{ pointerEvents: "none" }}>Пн–Пт · 09–18</a></li>
-                <li style={{ color: "var(--ink-1)" }}><a style={{ pointerEvents: "none" }}>Сб · 09–14</a></li>
-                <li style={{ color: "var(--ink-3)" }}><a style={{ pointerEvents: "none" }}>Нд · вихідний</a></li>
+                <li style={{ color: "var(--ink-1)" }}><span>Пн–Пт · {CONTACTS.hours.weekdays}</span></li>
+                <li style={{ color: "var(--ink-3)" }}><span>Сб · {CONTACTS.hours.saturday}</span></li>
+                <li style={{ color: "var(--ink-3)" }}><span>Нд · {CONTACTS.hours.sunday}</span></li>
               </ul>
             </div>
           </div>
