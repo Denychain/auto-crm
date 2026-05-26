@@ -15,7 +15,18 @@ export const CONTACTS = {
     saturday: "Вихідний",
     sunday: "Вихідний",
   },
+  coordinates: { lat: 48.9226, lng: 24.7111 },
 };
+
+export const SITE_NAV = [
+  { href: "/",         label: "Головна",     key: "home"     },
+  { href: "/us-cars",  label: "Авто з США",  key: "us-cars"  },
+  { href: "/gallery",  label: "Галерея",     key: "gallery"  },
+  { href: "/master",   label: "Про майстра", key: "master"   },
+  { href: "/contacts", label: "Контакти",    key: "contacts" },
+] as const;
+
+export type NavKey = typeof SITE_NAV[number]["key"];
 
 export const IDLE_THRESHOLD_DAYS = 3;
 export const DREAM_FUND_PERCENT = 0.05;
