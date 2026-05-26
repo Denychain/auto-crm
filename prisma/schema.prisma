@@ -119,6 +119,9 @@ model Order {
   currency         Currency    @default(UAH)
   baseExchangeRate Decimal?    @db.Decimal(10, 4) // Курс USD→UAH на момент створення
   
+  // -- Веб-заявки --
+  fromWebsite      Boolean     @default(false) // true = заявка з публічного сайту
+
   // -- Дати та Таймери --
   readyDate        DateTime?   // Фіксується, коли статус стає DONE (для лічильника простою)
   closedAt         DateTime?   // Фіксується, коли статус стає CLOSED (для фільтрації фінзвітів)

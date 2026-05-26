@@ -5,6 +5,8 @@ import { CONTACTS } from "@/lib/constants";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { FloatingCallButton } from "@/components/site/FloatingCallButton";
+import { submitContactRequest } from "./actions";
+import { uploadImage } from "@/lib/cloudinary";
 
 /* ── helpers ─────────────────────────────────────────── */
 function fmtBytes(b: number) {
@@ -48,12 +50,14 @@ const FAQ = [
 
 /* ── component ───────────────────────────────────────── */
 export default function ContactsClient() {
-  const [isOpen,   setIsOpen]     = useState(false);
-  const [today,    setToday]      = useState(-1);
-  const [files,    setFiles]      = useState<File[]>([]);
-  const [isDrag,   setIsDrag]     = useState(false);
-  const [formSent, setFormSent]   = useState(false);
-  const [openFaq,  setOpenFaq]    = useState<number | null>(null);
+  const [isOpen,     setIsOpen]     = useState(false);
+  const [today,      setToday]      = useState(-1);
+  const [files,      setFiles]      = useState<File[]>([]);
+  const [isDrag,     setIsDrag]     = useState(false);
+  const [formSent,   setFormSent]   = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg,   setErrorMsg]   = useState<string | null>(null);
+  const [openFaq,    setOpenFaq]    = useState<number | null>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
   /* hours open/closed + today highlight */
@@ -84,9 +88,46 @@ export default function ContactsClient() {
   function handleDrop(e: React.DragEvent)      { e.preventDefault(); setIsDrag(false); addFiles(e.dataTransfer.files); }
   function removeFile(i: number)               { setFiles(f => f.filter((_, idx) => idx !== i)); }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setFormSent(true);
+    setErrorMsg(null);
+    setSubmitting(true);
+
+    try {
+      const fd = new FormData(e.currentTarget);
+      const name   = (fd.get("name")   as string) ?? "";
+      const phone  = (fd.get("phone")  as string) ?? "";
+      const car    = (fd.get("car")    as string) ?? "";
+      const damage = (fd.get("damage") as string) ?? "";
+      const website = (fd.get("website") as string) ?? ""; // honeypot
+
+      // Upload photos to Cloudinary
+      const photoUrls: string[] = [];
+      for (const file of files) {
+        const url = await uploadImage(file);
+        photoUrls.push(url);
+      }
+
+      const result = await submitContactRequest({
+        name,
+        phone,
+        car:      car   || undefined,
+        damage:   damage || undefined,
+        photoUrls,
+        website,
+      });
+
+      if (result.ok) {
+        setFormSent(true);
+      } else {
+        setErrorMsg(result.error);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Невідома помилка";
+      setErrorMsg(msg);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -298,11 +339,11 @@ export default function ContactsClient() {
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
                 Google Maps
               </a>
-              <a href={`https://waze.com/ul?ll=${CONTACTS.coordinates.lat},${CONTACTS.coordinates.lng}&navigate=yes`} target="_blank" rel="noopener noreferrer" className="btn-sm">
+              <a href={`https://waze.com/ul?q=${encodeURIComponent(CONTACTS.address)}&navigate=yes`} target="_blank" rel="noopener noreferrer" className="btn-sm">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 6.63C18.95 4.02 16.15 2.25 13 2.03c-.33-.02-.67-.03-1-.03C6.48 2 2 6.48 2 12c0 2.4.85 4.6 2.26 6.33L3 21l2.82-1.21A9.943 9.943 0 0 0 12 22c.33 0 .67-.02 1-.05 4.25-.4 7.76-3.3 9.02-7.24.41-1.26.6-2.59.52-3.97-.07-1.48-.48-2.9-1-4.11zM12 20c-1.64 0-3.16-.5-4.42-1.34l-.29-.2-2.56 1.09.94-2.59-.2-.31A8 8 0 1 1 20 12c0 4.42-3.58 8-8 8zm4.16-6.12c-.22-.11-1.32-.65-1.53-.73-.2-.07-.35-.11-.5.11s-.57.73-.7.88c-.13.15-.26.17-.48.06-.22-.11-.93-.34-1.77-1.09-.65-.58-1.09-1.3-1.22-1.52-.13-.22-.01-.34.1-.45.1-.1.22-.26.33-.39.11-.13.15-.22.22-.37.07-.15.04-.28-.02-.39-.06-.11-.5-1.2-.68-1.64-.18-.43-.37-.37-.5-.38h-.43c-.15 0-.39.06-.59.28-.2.22-.78.76-.78 1.86s.8 2.16.91 2.31c.11.15 1.58 2.41 3.83 3.38.54.23.96.37 1.28.47.54.17 1.03.15 1.42.09.43-.07 1.32-.54 1.51-1.06.19-.52.19-.97.13-1.06-.06-.09-.2-.15-.43-.26z"/></svg>
                 Waze
               </a>
-              <a href={`https://maps.apple.com/?q=${CONTACTS.coordinates.lat},${CONTACTS.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="btn-sm">
+              <a href={`https://maps.apple.com/?q=${encodeURIComponent(CONTACTS.address)}`} target="_blank" rel="noopener noreferrer" className="btn-sm">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.15 1.26-2.13 3.76.03 2.99 2.6 3.98 2.63 3.99-.03.07-.41 1.41-1.35 2.87M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                 Apple Maps
               </a>
@@ -384,38 +425,47 @@ export default function ContactsClient() {
 
               {formSent ? (
                 <div className="form-status is-visible">
-                  Дякуємо за звернення! Форма ще в розробці — будь ласка,{" "}
-                  <strong>зателефонуйте</strong> на{" "}
+                  <strong>Дякуємо за заявку!</strong> Ми її отримали і зв&apos;яжемось з вами
+                  найближчим часом. Або зв&apos;яжіться з нами напряму:{" "}
                   <a href={`tel:${CONTACTS.phone}`} style={{ color: "var(--accent)" }}>
                     +380 99 233 44 20
                   </a>{" "}
-                  або{" "}
+                  /&nbsp;
                   <a href={CONTACTS.telegram} target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>
-                    напишіть у Telegram
-                  </a>{" "}
-                  — там точно побачимо ваше повідомлення.
+                    Telegram
+                  </a>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} noValidate>
+                  {/* Honeypot — hidden from real users, bots fill this */}
+                  <input
+                    name="website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+                    aria-hidden="true"
+                  />
+
                   <div className="field-row">
                     <div className="field">
                       <label htmlFor="f-name">Ваше ім&apos;я</label>
-                      <input id="f-name" type="text" placeholder="Олексій" required />
+                      <input id="f-name" name="name" type="text" placeholder="Олексій" required />
                     </div>
                     <div className="field">
                       <label htmlFor="f-phone">Номер телефону</label>
-                      <input id="f-phone" type="tel" placeholder="+380 __  ___  __ __" required />
+                      <input id="f-phone" name="phone" type="tel" placeholder="+380 __  ___  __ __" required />
                     </div>
                   </div>
 
                   <div className="field" style={{ marginTop: 14 }}>
                     <label htmlFor="f-car">Автомобіль</label>
-                    <input id="f-car" type="text" placeholder="Toyota Camry 2021" />
+                    <input id="f-car" name="car" type="text" placeholder="Toyota Camry 2021" />
                   </div>
 
                   <div className="field" style={{ marginTop: 14 }}>
                     <label htmlFor="f-damage">Опис пошкоджень</label>
-                    <textarea id="f-damage" placeholder="Опишіть, що трапилось і які елементи пошкоджено…" rows={4}></textarea>
+                    <textarea id="f-damage" name="damage" placeholder="Опишіть, що трапилось і які елементи пошкоджено…" rows={4}></textarea>
                   </div>
 
                   <div
@@ -463,6 +513,19 @@ export default function ContactsClient() {
                     </div>
                   )}
 
+                  {errorMsg && (
+                    <div
+                      className="form-error"
+                      style={{
+                        marginTop: 12, padding: "12px 16px",
+                        background: "rgba(255,87,34,.1)", border: "1px solid rgba(255,87,34,.35)",
+                        color: "var(--accent)", fontSize: 14, lineHeight: 1.5,
+                      }}
+                    >
+                      {errorMsg}
+                    </div>
+                  )}
+
                   <div className="submit-row">
                     <p className="terms">
                       Натискаючи «Надіслати», ви погоджуєтесь з умовами обробки
@@ -470,21 +533,27 @@ export default function ContactsClient() {
                     </p>
                     <button
                       type="submit"
+                      disabled={submitting}
                       className="btn"
                       style={{
                         display: "inline-flex", alignItems: "center", gap: 10,
-                        padding: "14px 28px", background: "var(--accent)", color: "#0a0a0a",
+                        padding: "14px 28px",
+                        background: submitting ? "rgba(255,87,34,.5)" : "var(--accent)",
+                        color: "#0a0a0a",
                         fontWeight: 700, fontSize: 14, letterSpacing: ".04em",
                         clipPath: "polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))",
-                        border: "none", cursor: "pointer", transition: "background .15s ease",
+                        border: "none", cursor: submitting ? "not-allowed" : "pointer",
+                        transition: "background .15s ease",
                         whiteSpace: "nowrap",
                       }}
                     >
-                      Надіслати заявку
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ width: 16, height: 16 }}>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                        <polyline points="12 5 19 12 12 19"/>
-                      </svg>
+                      {submitting ? "Надсилається…" : "Надіслати заявку"}
+                      {!submitting && (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ width: 16, height: 16 }}>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                          <polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </form>

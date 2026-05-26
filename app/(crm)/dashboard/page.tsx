@@ -14,6 +14,7 @@ import { DebtorsList } from "@/components/dashboard/DebtorsList";
 import { PostponedReminders } from "@/components/dashboard/PostponedReminders";
 import { ShoppingNeededWidget } from "@/components/dashboard/ShoppingNeededWidget";
 import { RecentClosedOrders } from "@/components/dashboard/RecentClosedOrders";
+import { WebRequestsWidget } from "@/components/dashboard/WebRequestsWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function HomePage() {
     now.getTime() - POSTPONED_REMINDER_DAYS * 24 * 60 * 60 * 1000
   );
 
-  const [nonClosed, shopping, recentClosed, backlogCount, clientCount, settings, latestRate] =
+  const [nonClosed, shopping, recentClosed, backlogCount, clientCount, settings, latestRate, webRequests] =
     await Promise.all([
       prisma.order.findMany({
         where: { status: { not: OrderStatus.CLOSED } },
@@ -67,6 +68,15 @@ export default async function HomePage() {
       prisma.client.count({ where: { deletedAt: null } }),
       prisma.settings.findUnique({ where: { id: "singleton" } }),
       prisma.exchangeRate.findFirst({ orderBy: { date: "desc" } }),
+      prisma.order.findMany({
+        where: { fromWebsite: true, status: OrderStatus.QUEUE },
+        include: {
+          client:  { select: { name: true, phone: true } },
+          vehicle: { select: { make: true, model: true } },
+          photos:  { take: 1, orderBy: { createdAt: "asc" } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
     ]);
 
   const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
@@ -126,11 +136,14 @@ export default async function HomePage() {
     where: { isNeeded: true },
   });
 
+  const webRequestsS = deepSerialize(webRequests);
+
   const urgentCount =
     idleCars.length +
     stopOrders.length +
     debtors.length +
-    postponedReminders.length;
+    postponedReminders.length +
+    webRequestsS.length;
 
   return (
     <div className="flex min-h-full flex-col">
@@ -185,6 +198,7 @@ export default async function HomePage() {
         ) : (
           <div className="flex flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
             <p className="text-sm font-bold text-amber-900">⚠️ Потребує уваги</p>
+            <WebRequestsWidget orders={webRequestsS} />
             <IdleCarsList cars={idleCars} />
             <STOPSection orders={stopOrders} />
             <DebtorsList debtors={debtors} totalDebt={totalDebt} displayCurrency={displayCurrency} />

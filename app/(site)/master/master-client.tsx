@@ -268,7 +268,7 @@ export default function MasterClient() {
 
               <aside className="id-panel" aria-label="Картка майстра">
                 <div className="who">
-                  <span className="name">[ Ім&#x2019;я ]</span>
+                  <span className="name">Дмитро</span>
                   <span className="role">// Власник · Колорист</span>
                 </div>
                 <div className="specs">

@@ -1236,6 +1236,7 @@ export default function LandingClient() {
                   <span className="halo"></span>
                   <span className="dot"></span>
                 </span>
+                {/* TODO: decorative text only — keep hardcoded, not used for navigation */}
                 <span className="map-coords">
                   <span>48.9226° N</span>
                   <span>24.7111° E</span>
