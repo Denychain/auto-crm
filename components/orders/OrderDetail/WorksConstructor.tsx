@@ -166,17 +166,14 @@ const WORK_CHIPS = [
 interface WorksConstructorProps {
   orderId: string;
   initialWorks: OrderWork[];
+  /** Серверно-обчислена сума робіт з правильною нормалізацією валюти */
+  worksTotal: number;
 }
 
-export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProps) {
+export function WorksConstructor({ orderId, initialWorks, worksTotal }: WorksConstructorProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { displayCurrency, rate } = useCurrency();
-
-  const total = initialWorks.reduce((sum, w) => {
-    const wc = ((w as { currency?: string }).currency ?? "UAH") as Currency;
-    return sum + convert({ amount: Number(w.price), currency: wc }, displayCurrency, rate ?? undefined);
-  }, 0);
 
   function handleAdd(name: string, price: number, currency: Currency) {
     startTransition(async () => {
@@ -195,6 +192,7 @@ export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProp
   function handleUpdate(workId: string, name: string, price: number, currency: Currency) {
     startTransition(async () => {
       await updateWork(workId, orderId, { name, price, currency });
+      router.refresh();
     });
   }
 
@@ -205,7 +203,7 @@ export function WorksConstructor({ orderId, initialWorks }: WorksConstructorProp
           <CardTitle className="text-base">Роботи</CardTitle>
           <div className="flex items-center gap-2">
             {isPending && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
-            <span className="text-sm font-semibold">{formatMoney(total, displayCurrency)}</span>
+            <span className="text-sm font-semibold">{formatMoney(worksTotal, displayCurrency)}</span>
           </div>
         </div>
       </CardHeader>

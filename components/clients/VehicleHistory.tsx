@@ -1,20 +1,21 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { OrderStatus, PhotoType } from "@prisma/client";
+import { OrderStatus, PhotoType, Currency } from "@prisma/client";
 import { StatusBadge } from "@/components/orders/StatusBadge";
-import { calcOrderTotal } from "@/lib/utils";
+import { computeOrderTotals, toDisplay, type OrderForTotals } from "@/lib/finance-pure";
 import { formatMoney } from "@/lib/currency";
-import { Currency } from "@prisma/client";
 
-interface Work { name: string; price: unknown }
-interface Part { estimatedPrice: unknown; actualPrice: unknown }
+interface Work { name: string; price: unknown; currency?: string; exchangeRate?: unknown }
+interface Part { estimatedPrice: unknown; actualPrice: unknown; currency?: string; exchangeRate?: unknown }
 interface Photo { url: string; type: PhotoType }
 
 interface HistoryOrder {
   id: string;
   status: OrderStatus;
   description: string | null;
+  currency?: string;
+  baseExchangeRate?: unknown;
   estimatedPrice: unknown;
   advancePayment: unknown;
   totalPaid: unknown;
@@ -28,15 +29,14 @@ interface HistoryOrder {
 interface VehicleHistoryProps {
   orders: HistoryOrder[];
   displayCurrency?: Currency;
+  fallbackRate?: number;
 }
 
-function n(v: unknown): number {
-  if (v == null) return 0;
-  if (typeof v === "object" && "toNumber" in (v as object)) return (v as { toNumber(): number }).toNumber();
-  return Number(v);
-}
-
-export function VehicleHistory({ orders, displayCurrency = Currency.UAH }: VehicleHistoryProps) {
+export function VehicleHistory({
+  orders,
+  displayCurrency = Currency.UAH,
+  fallbackRate = 41,
+}: VehicleHistoryProps) {
   if (orders.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -50,11 +50,12 @@ export function VehicleHistory({ orders, displayCurrency = Currency.UAH }: Vehic
       {/* Vertical line */}
       <div className="absolute left-[28px] top-6 bottom-6 w-px bg-border" />
 
-      {orders.map((order, idx) => {
-        const total = calcOrderTotal(
-          order.works.map((w) => ({ price: n(w.price) })),
-          order.parts.map((p) => ({ estimatedPrice: n(p.estimatedPrice), actualPrice: p.actualPrice != null ? n(p.actualPrice) : null }))
-        );
+      {orders.map((order) => {
+        const total = computeOrderTotals(
+          order as OrderForTotals,
+          displayCurrency,
+          fallbackRate
+        ).orderTotal;
         const processPhoto = order.photos?.find((p) => p.type === PhotoType.PROCESS);
 
         return (
@@ -98,12 +99,16 @@ export function VehicleHistory({ orders, displayCurrency = Currency.UAH }: Vehic
               {/* Works list */}
               {order.works.length > 0 && (
                 <ul className="flex flex-col gap-0.5">
-                  {order.works.map((w, i) => (
-                    <li key={i} className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">{w.name}</span>
-                      <span className="font-medium">{formatMoney(n(w.price), displayCurrency)}</span>
-                    </li>
-                  ))}
+                  {order.works.map((w, i) => {
+                    const wCurrency = (w.currency as Currency) ?? Currency.UAH;
+                    const wPrice = toDisplay(w.price, wCurrency, w.exchangeRate, displayCurrency, fallbackRate);
+                    return (
+                      <li key={i} className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">{w.name}</span>
+                        <span className="font-medium">{formatMoney(wPrice, displayCurrency)}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
 

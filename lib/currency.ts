@@ -43,7 +43,12 @@ export function normalizeToUSD(
   return a / r;
 }
 
-/** Format money for display. */
+/**
+ * !! ВАЖЛИВО: ця функція ЛИШЕ форматує число зі значком валюти.
+ * Жодної конвертації! Перед викликом передай число вже нормалізоване
+ * у вказану валюту через convert() або computeOrderTotals().
+ * Якщо передати UAH-суму з currency=USD — отримаєш "$107 830" замість "$2 598".
+ */
 export function formatMoney(
   amount: DecimalLike,
   currency: Currency = Currency.UAH

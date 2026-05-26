@@ -19,8 +19,9 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { calcOrderTotal, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
+import type { OrderTotals } from "@/lib/finance";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import {
   applyShareTemplate,
@@ -527,6 +528,7 @@ interface WorkerSharesProps {
   orderId: string;
   initialShares: WorkerShareFull[];
   order: FullOrder;
+  totals: OrderTotals;
   templates: TemplateWithRules[];
   workers: Worker[];
 }
@@ -535,6 +537,7 @@ export function WorkerShares({
   orderId,
   initialShares,
   order,
+  totals,
   templates,
   workers,
 }: WorkerSharesProps) {
@@ -543,19 +546,14 @@ export function WorkerShares({
   const { displayCurrency } = useCurrency();
   const [addOpen, setAddOpen] = useState(false);
 
-  // ── финансова логіка ──
-  const orderTotal = calcOrderTotal(order.works, order.parts);
-  const partsTotal = order.parts.reduce(
-    (s, p) =>
-      s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
-    0
-  );
-  // B06: base = actual received money minus actual material cost
-  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
-  const distributed = initialShares.reduce((s, sh) => s + Number(sh.amount), 0);
+  // Усі суми приходять з серверно-обчисленого totals — жодної локальної математики
+  const base = totals.poolForPeople;
+  const distributed = totals.allocatedToWorkers;
   const diff = distributed - base;
-  const overDistributed = diff > 0.01;
+  const overDistributed = totals.overAllocated;
   const underDistributed = diff < -0.01;
+  // Доступно по факту оплати (cashflow-інфо)
+  const cashAvailable = Math.max(0, totals.paid + totals.advance - totals.partsActualTotal);
 
   function handleDelete(shareId: string) {
     startTransition(async () => {
@@ -574,6 +572,7 @@ export function WorkerShares({
   function handleUpdateAmount(shareId: string, amt: number) {
     startTransition(async () => {
       await updateWorkerShareAmount(shareId, orderId, amt);
+      router.refresh();
     });
   }
 
@@ -594,18 +593,24 @@ export function WorkerShares({
           <div className="flex justify-between text-muted-foreground">
             <span>Загальна сума замовлення</span>
             <span className="font-medium text-foreground">
-              {formatMoney(orderTotal, displayCurrency)}
+              {formatMoney(totals.orderTotal, displayCurrency)}
             </span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Матеріали (факт)</span>
-            <span>−{formatMoney(partsTotal, displayCurrency)}</span>
+            <span>−{formatMoney(totals.partsActualTotal, displayCurrency)}</span>
           </div>
           <Separator className="my-1" />
           <div className="flex justify-between font-semibold text-sm">
             <span>Залишок на людей</span>
             <span>{formatMoney(base, displayCurrency)}</span>
           </div>
+          {cashAvailable < base - 0.01 && (
+            <div className="flex justify-between text-muted-foreground/70 pt-0.5">
+              <span>Доступно по факту оплати</span>
+              <span>{formatMoney(cashAvailable, displayCurrency)}</span>
+            </div>
+          )}
         </div>
 
         {/* ── Шаблон ───────────────────────────────────── */}

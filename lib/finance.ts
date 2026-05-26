@@ -1,6 +1,4 @@
 import { prisma } from "./prisma";
-import { calcOrderTotal } from "./utils";
-import { normalizeToUSD } from "./currency";
 import { DREAM_FUND_PERCENT } from "./constants";
 import { OrderStatus, Currency } from "@prisma/client";
 import {
@@ -12,17 +10,45 @@ import {
   endOfMonth,
 } from "date-fns";
 
+// ── Pure helpers (imported for local use) ─────────────────────────────────────
+import {
+  toN,
+  toDisplay,
+  computeOrderTotals,
+  type OrderForTotals,
+} from "./finance-pure";
+
+// ── Re-export все клієнт-безпечне з finance-pure ─────────────────────────────
+export type {
+  OrderTotals,
+  OrderForTotals,
+  DebtorRow,
+} from "./finance-pure";
+export {
+  toN,
+  toDisplay,
+  computeOrderTotals,
+  computeOrderDebt,
+  aggregateDebtors,
+} from "./finance-pure";
+
 // ── Existing: 5% contribution on order close ─────────────────────────────────
 
 export async function handleOrderClosed(orderId: string): Promise<void> {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { works: true, parts: true },
-  });
+  const [order, settings, latestRate] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id: orderId },
+      include: { works: true, parts: true },
+    }),
+    prisma.settings.findUnique({ where: { id: "singleton" } }),
+    prisma.exchangeRate.findFirst({ orderBy: { date: "desc" } }),
+  ]);
   if (!order) return;
 
-  const total = calcOrderTotal(order.works, order.parts);
-  const contribution = total * DREAM_FUND_PERCENT;
+  const displayCurrency = ((settings as { displayCurrency?: string } | null)?.displayCurrency ?? Currency.UAH) as Currency;
+  const fallbackRate = toN(latestRate?.usdToUah) || 41;
+  const totals = computeOrderTotals(order as unknown as OrderForTotals, displayCurrency, fallbackRate);
+  const contribution = totals.orderTotal * DREAM_FUND_PERCENT;
   if (contribution <= 0) return;
 
   const funds = await prisma.dreamFund.findMany({ orderBy: { createdAt: "asc" } });
@@ -92,40 +118,12 @@ export interface FinanceAggregation {
   workerGroups: WorkerGroup[];
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function toN(v: unknown): number {
-  if (v == null) return 0;
-  if (typeof v === "object" && "toNumber" in (v as object))
-    return (v as { toNumber(): number }).toNumber();
-  return Number(v);
-}
-
 // ── Main aggregation ──────────────────────────────────────────────────────────
-
-// Normalize an amount to the display currency using its stored exchange rate
-function toDisplay(
-  amount: unknown,
-  recordCurrency: Currency | string,
-  exchangeRate: unknown,
-  displayCurrency: Currency,
-  fallbackRate: number
-): number {
-  const n = toN(amount);
-  const rate = toN(exchangeRate) || fallbackRate;
-  const src = recordCurrency as Currency;
-
-  if (src === displayCurrency) return n;
-  if (src === Currency.UAH && displayCurrency === Currency.USD) return n / rate;
-  if (src === Currency.USD && displayCurrency === Currency.UAH) return n * rate;
-  return normalizeToUSD(n, src, rate);
-}
 
 export async function aggregateFinanceData(
   range: { from: Date; to: Date },
   displayCurrency: Currency = Currency.UAH
 ): Promise<FinanceAggregation> {
-  // Fetch current fallback rate
   const latestRate = await prisma.exchangeRate.findFirst({ orderBy: { date: "desc" } });
   const fallbackRate = toN(latestRate?.usdToUah) || 41;
 
@@ -150,10 +148,7 @@ export async function aggregateFinanceData(
   ]);
 
   const revenue = closedOrders.reduce((sum, o) => {
-    const orderCurrency = (o as { currency?: Currency }).currency ?? Currency.UAH;
-    const rate = toN((o as { baseExchangeRate?: unknown }).baseExchangeRate) || fallbackRate;
-    const total = calcOrderTotal(o.works, o.parts);
-    return sum + toDisplay(total, orderCurrency, rate, displayCurrency, fallbackRate);
+    return sum + computeOrderTotals(o as unknown as OrderForTotals, displayCurrency, fallbackRate).orderTotal;
   }, 0);
 
   const materials = closedOrders.reduce((sum, o) => {
@@ -180,12 +175,8 @@ export async function aggregateFinanceData(
   }, 0);
 
   const debt = activeOrders.reduce((sum, o) => {
-    const orderCurrency = (o as { currency?: Currency }).currency ?? Currency.UAH;
-    const rate = toN((o as { baseExchangeRate?: unknown }).baseExchangeRate) || fallbackRate;
-    const total = calcOrderTotal(o.works, o.parts);
-    const paid = toN(o.totalPaid) + toN(o.advancePayment);
-    const d = total - paid;
-    return sum + (d > 0.01 ? toDisplay(d, orderCurrency, rate, displayCurrency, fallbackRate) : 0);
+    const outstanding = computeOrderTotals(o as unknown as OrderForTotals, displayCurrency, fallbackRate).outstanding;
+    return sum + (outstanding > 0.01 ? outstanding : 0);
   }, 0);
 
   const orderPlanFact: OrderPlanFact[] = closedOrders
@@ -220,7 +211,6 @@ export async function aggregateFinanceData(
     for (const ws of o.workerShares) {
       const role = (ws as { roleSnapshot?: string | null }).roleSnapshot;
       const workerId = (ws as { workerId?: string | null }).workerId;
-      // Group key: if workerId+role available — use that (so Тато-PAINTER ≠ Тато-OWNER)
       const groupKey = workerId && role
         ? `${workerId}::${role}`
         : ws.workerName;

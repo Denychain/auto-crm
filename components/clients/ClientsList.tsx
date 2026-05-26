@@ -6,6 +6,7 @@ import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ClientCard } from "@/components/clients/ClientCard";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { OrderStatus } from "@prisma/client";
 
 interface Vehicle {
@@ -17,11 +18,13 @@ interface Vehicle {
 
 interface OrderSummary {
   status: OrderStatus;
+  currency?: string;
+  baseExchangeRate?: unknown;
   estimatedPrice: unknown;
   advancePayment: unknown;
   totalPaid: unknown;
-  works: { price: unknown }[];
-  parts: { estimatedPrice: unknown; actualPrice: unknown }[];
+  works: { price: unknown; currency?: string; exchangeRate?: unknown }[];
+  parts: { estimatedPrice: unknown; actualPrice: unknown; currency?: string; exchangeRate?: unknown }[];
 }
 
 interface ClientData {
@@ -40,6 +43,8 @@ interface ClientsListProps {
 export function ClientsList({ clients }: ClientsListProps) {
   const [query, setQuery] = useState("");
   const handleChange = useCallback((v: string) => setQuery(v), []);
+  const { displayCurrency, rate } = useCurrency();
+  const fallbackRate = rate ?? 41;
 
   const q = query.trim().toLowerCase();
   const filtered = q
@@ -90,7 +95,12 @@ export function ClientsList({ clients }: ClientsListProps) {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((c) => (
-            <ClientCard key={c.id} {...c} />
+            <ClientCard
+              key={c.id}
+              {...c}
+              displayCurrency={displayCurrency}
+              fallbackRate={fallbackRate}
+            />
           ))}
         </div>
       )}

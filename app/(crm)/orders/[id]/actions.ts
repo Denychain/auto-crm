@@ -5,6 +5,7 @@ import { PartStatus, Currency, WorkerRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { requireAuth } from "@/lib/auth";
+import { computeOrderTotals } from "@/lib/finance";
 
 function revalidate(orderId: string) {
   revalidatePath(`/orders/${orderId}`);
@@ -38,12 +39,21 @@ export async function updateWork(
   data: { name: string; price: number; currency?: Currency }
 ): Promise<void> {
   await requireAuth();
+  // При зміні валюти — оновлюємо курс, щоб заморозити поточний курс для нового запису
+  let exchangeRateUpdate: Record<string, unknown> = {};
+  if (data.currency) {
+    const current = await prisma.orderWork.findUnique({ where: { id: workId }, select: { currency: true } });
+    if (current && current.currency !== data.currency) {
+      exchangeRateUpdate = { exchangeRate: await getCurrentRate() };
+    }
+  }
   await prisma.orderWork.update({
     where: { id: workId },
     data: {
       name: data.name,
       price: data.price,
       ...(data.currency ? { currency: data.currency } : {}),
+      ...exchangeRateUpdate,
     },
   });
   revalidate(orderId);
@@ -102,6 +112,14 @@ export async function updatePart(
   }
 ): Promise<void> {
   await requireAuth();
+  // При зміні валюти — оновлюємо курс, щоб заморозити поточний курс для нового запису
+  let exchangeRateUpdate: Record<string, unknown> = {};
+  if (data.currency) {
+    const current = await prisma.orderPart.findUnique({ where: { id: partId }, select: { currency: true } });
+    if (current && current.currency !== data.currency) {
+      exchangeRateUpdate = { exchangeRate: await getCurrentRate() };
+    }
+  }
   await prisma.orderPart.update({
     where: { id: partId },
     data: {
@@ -110,6 +128,7 @@ export async function updatePart(
       estimatedPrice: data.estimatedPrice,
       actualPrice: data.actualPrice,
       ...(data.currency ? { currency: data.currency } : {}),
+      ...exchangeRateUpdate,
       articleCode: data.articleCode?.trim() || null,
     },
   });
@@ -210,12 +229,9 @@ export async function applyShareTemplate(
   ]);
   if (!order || !template) return { needWorkers: [] };
 
-  const partsTotal = order.parts.reduce(
-    (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
-    0
-  );
-  // B06: base = actual received money minus actual material cost
-  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
+  // База розподілу = сума робіт (матеріали — pass-through, не діляться)
+  const rate = (await getCurrentRate()).toNumber();
+  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], Currency.UAH, rate).poolForPeople;
 
   const needWorkers: WorkerRole[] = [];
 
@@ -257,17 +273,12 @@ export async function addWorkerShareFromDirectory(
   ]);
   if (!order || !worker) return;
 
-  const partsTotal = order.parts.reduce(
-    (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
-    0
-  );
-  // B06: base = actual received money minus actual material cost
-  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
+  // База розподілу = сума робіт (матеріали — pass-through, не діляться)
+  const rate = await getCurrentRate();
+  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], Currency.UAH, rate.toNumber()).poolForPeople;
 
   const amount =
     sharePercent != null ? (base * sharePercent) / 100 : (fixedAmount ?? 0);
-
-  const rate = await getCurrentRate();
   await prisma.workerShare.create({
     data: {
       orderId,
@@ -295,12 +306,9 @@ export async function updateWorkerSharePercent(
   });
   if (!order) return;
 
-  const partsTotal = order.parts.reduce(
-    (s, p) => s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
-    0
-  );
-  // B06: base = actual received money minus actual material cost
-  const base = Math.max(0, Number(order.totalPaid) - partsTotal);
+  // База розподілу = сума робіт (матеріали — pass-through, не діляться)
+  const rate = (await getCurrentRate()).toNumber();
+  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], Currency.UAH, rate).poolForPeople;
 
   await prisma.workerShare.update({
     where: { id: shareId },

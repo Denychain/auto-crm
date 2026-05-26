@@ -5,8 +5,9 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Phone, GripVertical, AlertTriangle, Clock } from "lucide-react";
 import type { OrderWithRelations } from "@/types/orders";
-import { calcDebt, calcIdleDays, isOverdue, cn } from "@/lib/utils";
-import { formatMoney, convert } from "@/lib/currency";
+import { calcIdleDays, isOverdue, cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { computeOrderTotals, type OrderForTotals } from "@/lib/finance-pure";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface OrderCardProps {
@@ -28,16 +29,15 @@ export function OrderCard({ order, isPending, isOverlay, isBacklog }: OrderCardP
     : undefined;
 
   const { displayCurrency, rate } = useCurrency();
-  const orderCurrency = (order as { currency?: string }).currency ?? "UAH";
-  const debt = calcDebt(order);
-  const debtDisplay = convert(
-    { amount: debt, currency: orderCurrency as import("@prisma/client").Currency },
-    displayCurrency,
-    rate ?? undefined
-  );
+  const fallbackRate = rate ?? 41;
+
+  // Правильний розрахунок боргу з валютною нормалізацією
+  const totals = computeOrderTotals(order as unknown as OrderForTotals, displayCurrency, fallbackRate);
+  const debtDisplay = totals.outstanding;
+  const hasDebt = debtDisplay > 0.01;
+
   const overdue = isOverdue(order);
   const idleDays = calcIdleDays(order.readyDate);
-  const hasDebt = debt > 0.01;
 
   return (
     <div

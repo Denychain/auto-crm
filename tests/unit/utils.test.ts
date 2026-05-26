@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { calcOrderTotal, calcDebt, calcIdleDays, isOverdue, formatPlate, cn } from "@/lib/utils";
-import { OrderStatus } from "@prisma/client";
+import { computeOrderTotals, computeOrderDebt, aggregateDebtors } from "@/lib/finance-pure";
+import { OrderStatus, Currency } from "@prisma/client";
 
 // ── cn (tailwind merge) ────────────────────────────────────────────────────────
 describe("cn", () => {
@@ -164,5 +165,236 @@ describe("formatPlate", () => {
 
   it("handles 3-digit number plates", () => {
     expect(formatPlate("AA123BB")).toBe("AA 123 BB");
+  });
+});
+
+// ── computeOrderTotals ────────────────────────────────────────────────────────
+describe("computeOrderTotals", () => {
+  const RATE = 40; // 40 UAH per 1 USD
+
+  it("повністю UAH-замовлення в UAH-режимі", () => {
+    const order = {
+      currency: "UAH",
+      advancePayment: 0,
+      totalPaid: 0,
+      works: [{ price: 1000, currency: "UAH" }, { price: 500, currency: "UAH" }],
+      parts: [{ estimatedPrice: 200, actualPrice: null, currency: "UAH" }],
+    };
+    const t = computeOrderTotals(order, Currency.UAH, RATE);
+    expect(t.worksTotal).toBe(1500);
+    expect(t.partsActualTotal).toBe(200);
+    expect(t.orderTotal).toBe(1700);
+    expect(t.outstanding).toBe(1700);
+  });
+
+  it("повністю UAH-замовлення в USD-режимі конвертується через rate", () => {
+    const order = {
+      currency: "UAH",
+      advancePayment: 0,
+      totalPaid: 0,
+      works: [{ price: 4000, currency: "UAH" }],
+      parts: [],
+    };
+    const t = computeOrderTotals(order, Currency.USD, RATE);
+    expect(t.worksTotal).toBeCloseTo(100); // 4000 / 40
+    expect(t.orderTotal).toBeCloseTo(100);
+  });
+
+  it("повністю USD-замовлення в UAH-режимі конвертується через rate", () => {
+    const order = {
+      currency: "USD",
+      advancePayment: 0,
+      totalPaid: 0,
+      works: [{ price: 50, currency: "USD", exchangeRate: 40 }],
+      parts: [],
+    };
+    const t = computeOrderTotals(order, Currency.UAH, RATE);
+    expect(t.worksTotal).toBeCloseTo(2000); // 50 * 40
+    expect(t.orderTotal).toBeCloseTo(2000);
+  });
+
+  it("мішані роботи (USD + UAH) рахуються коректно в USD-режимі", () => {
+    const order = {
+      currency: "UAH",
+      advancePayment: 0,
+      totalPaid: 0,
+      works: [
+        { price: 50, currency: "USD", exchangeRate: 40 }, // = $50
+        { price: 800, currency: "UAH", exchangeRate: 40 }, // = $20 (800/40)
+      ],
+      parts: [],
+    };
+    const t = computeOrderTotals(order, Currency.USD, RATE);
+    expect(t.worksTotal).toBeCloseTo(70); // 50 + 20
+    expect(t.orderTotal).toBeCloseTo(70);
+  });
+
+  it("outstanding = 0 якщо повністю оплачено", () => {
+    const order = {
+      currency: "UAH",
+      advancePayment: 500,
+      totalPaid: 1500,
+      works: [{ price: 2000, currency: "UAH" }],
+      parts: [],
+    };
+    const t = computeOrderTotals(order, Currency.UAH, RATE);
+    expect(t.outstanding).toBe(0);
+  });
+
+  it("outstanding враховує аванс і оплату з конверсією", () => {
+    // Замовлення в UAH, оплата в UAH, дивимось в USD
+    const order = {
+      currency: "UAH",
+      advancePayment: 400, // = $10 в UAH
+      totalPaid: 0,
+      works: [{ price: 2000, currency: "UAH" }], // = $50 в UAH
+      parts: [],
+    };
+    const t = computeOrderTotals(order, Currency.USD, RATE);
+    expect(t.orderTotal).toBeCloseTo(50);   // 2000/40
+    expect(t.advance).toBeCloseTo(10);      // 400/40
+    expect(t.outstanding).toBeCloseTo(40);  // 50 - 10
+  });
+});
+
+// ── computeOrderDebt ──────────────────────────────────────────────────────────
+describe("computeOrderDebt", () => {
+  const RATE = 40;
+
+  it("UAH-замовлення: борг в UAH і USD коректний", () => {
+    const order = {
+      currency: "UAH",
+      advancePayment: 0,
+      totalPaid: 0,
+      works: [{ price: 1000, currency: "UAH" }],
+      parts: [],
+    };
+    const d = computeOrderDebt(order, Currency.UAH, RATE);
+    expect(d.orderCurrency).toBe(Currency.UAH);
+    expect(d.debtInOrderCurrency).toBe(1000);
+    expect(d.isPaid).toBe(false);
+
+    const dUsd = computeOrderDebt(order, Currency.USD, RATE);
+    expect(dUsd.debtInDisplayCurrency).toBeCloseTo(25); // 1000/40
+  });
+
+  it("USD-замовлення: борг в обох валютах коректний", () => {
+    const order = {
+      currency: "USD",
+      advancePayment: 0,
+      totalPaid: 0,
+      works: [{ price: 50, currency: "USD", exchangeRate: 40 }],
+      parts: [],
+    };
+    const d = computeOrderDebt(order, Currency.USD, RATE);
+    expect(d.orderCurrency).toBe(Currency.USD);
+    expect(d.debtInOrderCurrency).toBeCloseTo(50);
+    expect(d.debtInDisplayCurrency).toBeCloseTo(50);
+
+    const dUah = computeOrderDebt(order, Currency.UAH, RATE);
+    expect(dUah.debtInDisplayCurrency).toBeCloseTo(2000); // 50 * 40
+  });
+
+  it("isPaid = true коли борг = 0", () => {
+    const order = {
+      currency: "UAH",
+      advancePayment: 0,
+      totalPaid: 1000,
+      works: [{ price: 1000, currency: "UAH" }],
+      parts: [],
+    };
+    const d = computeOrderDebt(order, Currency.UAH, RATE);
+    expect(d.isPaid).toBe(true);
+    expect(d.debtInOrderCurrency).toBe(0);
+  });
+});
+
+// ── aggregateDebtors ──────────────────────────────────────────────────────────
+describe("aggregateDebtors", () => {
+  const RATE = 40;
+
+  it("агрегує 3 замовлення з різними валютами — totalDebt коректний", () => {
+    const orders = [
+      {
+        id: "o1",
+        currency: "UAH",
+        advancePayment: 0,
+        totalPaid: 0,
+        works: [{ price: 1000, currency: "UAH" }], // борг 1000 UAH = $25
+        parts: [],
+        client: { name: "Клієнт 1", phone: "0001" },
+        vehicle: { plateNumber: "AA0001BB", make: "Toyota", model: "Camry" },
+      },
+      {
+        id: "o2",
+        currency: "USD",
+        advancePayment: 0,
+        totalPaid: 0,
+        works: [{ price: 50, currency: "USD", exchangeRate: 40 }], // борг $50 = 2000 UAH
+        parts: [],
+        client: { name: "Клієнт 2", phone: "0002" },
+        vehicle: { plateNumber: "BB0002CC", make: "Honda", model: "Civic" },
+      },
+      {
+        id: "o3",
+        currency: "UAH",
+        advancePayment: 0,
+        totalPaid: 0,
+        works: [{ price: 800, currency: "UAH" }], // борг 800 UAH = $20
+        parts: [],
+        client: { name: "Клієнт 3", phone: "0003" },
+        vehicle: { plateNumber: "CC0003DD", make: "BMW", model: "3 Series" },
+      },
+    ];
+
+    // В UAH: 1000 + (50*40) + 800 = 3800 ₴
+    const { debtors: uahDebtors, totalDebt: totalUAH } = aggregateDebtors(
+      orders,
+      Currency.UAH,
+      RATE
+    );
+    expect(uahDebtors).toHaveLength(3);
+    expect(totalUAH).toBeCloseTo(3800);
+    // Сортовано за спаданням: o2=2000, o3=800, o1=1000 → [o2=2000, o1=1000, o3=800]
+    expect(uahDebtors[0].orderId).toBe("o2");
+    expect(uahDebtors[0].debt).toBeCloseTo(2000);
+
+    // В USD: (1000/40) + 50 + (800/40) = 25 + 50 + 20 = 95 $
+    const { debtors: usdDebtors, totalDebt: totalUSD } = aggregateDebtors(
+      orders,
+      Currency.USD,
+      RATE
+    );
+    expect(usdDebtors).toHaveLength(3);
+    expect(totalUSD).toBeCloseTo(95);
+  });
+
+  it("фільтрує повністю оплачені замовлення", () => {
+    const orders = [
+      {
+        id: "o1",
+        currency: "UAH",
+        advancePayment: 0,
+        totalPaid: 1000,
+        works: [{ price: 1000, currency: "UAH" }], // paid
+        parts: [],
+        client: { name: "Клієнт 1", phone: "0001" },
+        vehicle: { plateNumber: "AA0001BB", make: "Toyota", model: "Camry" },
+      },
+      {
+        id: "o2",
+        currency: "UAH",
+        advancePayment: 0,
+        totalPaid: 0,
+        works: [{ price: 500, currency: "UAH" }], // unpaid
+        parts: [],
+        client: { name: "Клієнт 2", phone: "0002" },
+        vehicle: { plateNumber: "BB0002CC", make: "Honda", model: "Civic" },
+      },
+    ];
+    const { debtors, totalDebt } = aggregateDebtors(orders, Currency.UAH, RATE);
+    expect(debtors).toHaveLength(1);
+    expect(debtors[0].orderId).toBe("o2");
+    expect(totalDebt).toBe(500);
   });
 });

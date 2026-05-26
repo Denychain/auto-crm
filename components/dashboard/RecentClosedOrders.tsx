@@ -1,36 +1,34 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatPlate } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
+import { computeOrderTotals, type OrderForTotals } from "@/lib/finance-pure";
 import { Currency } from "@prisma/client";
-
-function n(v: unknown): number {
-  if (v == null) return 0;
-  if (typeof v === "object" && "toNumber" in (v as object))
-    return (v as { toNumber(): number }).toNumber();
-  return Number(v);
-}
 
 interface ClosedOrder {
   id: string;
   updatedAt: Date;
   client: { name: string };
   vehicle: { plateNumber: string; make: string; model: string };
-  works: { price: unknown }[];
-  parts: { estimatedPrice: unknown; actualPrice: unknown }[];
+  currency?: string;
+  baseExchangeRate?: unknown;
+  works: { price: unknown; currency?: string; exchangeRate?: unknown }[];
+  parts: { estimatedPrice: unknown; actualPrice: unknown; currency?: string; exchangeRate?: unknown }[];
 }
 
 interface RecentClosedOrdersProps {
   orders: ClosedOrder[];
   weekRevenue: number;
   displayCurrency?: Currency;
+  fallbackRate?: number;
 }
 
 export function RecentClosedOrders({
   orders,
   weekRevenue,
   displayCurrency = Currency.UAH,
+  fallbackRate = 41,
 }: RecentClosedOrdersProps) {
   if (orders.length === 0) return null;
 
@@ -44,13 +42,11 @@ export function RecentClosedOrders({
       </div>
       <div className="flex flex-col gap-2">
         {orders.map((o) => {
-          const total = calcOrderTotal(
-            o.works.map((w) => ({ price: n(w.price) })),
-            o.parts.map((p) => ({
-              estimatedPrice: n(p.estimatedPrice),
-              actualPrice: p.actualPrice != null ? n(p.actualPrice) : null,
-            }))
-          );
+          const total = computeOrderTotals(
+            o as OrderForTotals,
+            displayCurrency,
+            fallbackRate
+          ).orderTotal;
           return (
             <Link
               key={o.id}

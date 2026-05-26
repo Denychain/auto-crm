@@ -340,6 +340,7 @@ export function PartsChecklist({ orderId, initialParts }: PartsChecklistProps) {
   ) {
     startTransition(async () => {
       await updatePart(partId, orderId, data);
+      router.refresh();
     });
   }
 

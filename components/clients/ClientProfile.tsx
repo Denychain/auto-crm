@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -14,8 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/orders/StatusBadge";
-import { formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatPlate } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
+import { computeOrderTotals, type OrderForTotals } from "@/lib/finance-pure";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { viberLink, telegramLinkByPhone, smsLink } from "@/lib/messenger";
 import {
@@ -24,12 +25,6 @@ import {
   removeVehicle,
   deleteClient,
 } from "@/app/(crm)/clients/[id]/actions";
-
-function n(v: unknown): number {
-  if (v == null) return 0;
-  if (typeof v === "object" && "toNumber" in (v as object)) return (v as { toNumber(): number }).toNumber();
-  return Number(v);
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -45,13 +40,15 @@ interface OrderItem {
   id: string;
   status: OrderStatus;
   description: string | null;
+  currency?: string;
+  baseExchangeRate?: unknown;
   estimatedPrice: unknown;
   advancePayment: unknown;
   totalPaid: unknown;
   createdAt: Date;
   vehicle: { plateNumber: string; make: string; model: string };
-  works: { price: unknown }[];
-  parts: { estimatedPrice: unknown; actualPrice: unknown }[];
+  works: { price: unknown; currency?: string; exchangeRate?: unknown }[];
+  parts: { estimatedPrice: unknown; actualPrice: unknown; currency?: string; exchangeRate?: unknown }[];
 }
 
 interface ClientProfileProps {
@@ -185,7 +182,8 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">("all");
-  const { displayCurrency } = useCurrency();
+  const { displayCurrency, rate } = useCurrency();
+  const fallbackRate = rate ?? 41;
 
   const viberHref = viberLink(phone, `Доброго дня, ${name}!`);
   const tgHref = telegramLinkByPhone(phone);
@@ -197,14 +195,11 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
     return true;
   });
 
+  // Загальний борг — правильна валютна нормалізація
   const totalDebt = orders.reduce((sum, o) => {
     if (o.status === OrderStatus.CLOSED) return sum;
-    const total = calcOrderTotal(
-      o.works.map((w) => ({ price: n(w.price) })),
-      o.parts.map((p) => ({ estimatedPrice: n(p.estimatedPrice), actualPrice: p.actualPrice != null ? n(p.actualPrice) : null }))
-    );
-    const debt = total - n(o.totalPaid) - n(o.advancePayment);
-    return sum + (debt > 0.01 ? debt : 0);
+    const outstanding = computeOrderTotals(o as OrderForTotals, displayCurrency, fallbackRate).outstanding;
+    return sum + (outstanding > 0.01 ? outstanding : 0);
   }, 0);
 
   function handleDelete() {
@@ -334,10 +329,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
             <p className="py-6 text-center text-sm text-muted-foreground">Немає замовлень</p>
           ) : (
             filteredOrders.map((o) => {
-              const total = calcOrderTotal(
-                o.works.map((w) => ({ price: n(w.price) })),
-                o.parts.map((p) => ({ estimatedPrice: n(p.estimatedPrice), actualPrice: p.actualPrice != null ? n(p.actualPrice) : null }))
-              );
+              const total = computeOrderTotals(o as OrderForTotals, displayCurrency, fallbackRate).orderTotal;
               return (
                 <Link
                   key={o.id}
@@ -379,18 +371,11 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
           {orders
             .filter((o) => {
               if (o.status === OrderStatus.CLOSED) return false;
-              const total = calcOrderTotal(
-                o.works.map((w) => ({ price: n(w.price) })),
-                o.parts.map((p) => ({ estimatedPrice: n(p.estimatedPrice), actualPrice: p.actualPrice != null ? n(p.actualPrice) : null }))
-              );
-              return total - n(o.totalPaid) - n(o.advancePayment) > 0.01;
+              const outstanding = computeOrderTotals(o as OrderForTotals, displayCurrency, fallbackRate).outstanding;
+              return outstanding > 0.01;
             })
             .map((o) => {
-              const total = calcOrderTotal(
-                o.works.map((w) => ({ price: n(w.price) })),
-                o.parts.map((p) => ({ estimatedPrice: n(p.estimatedPrice), actualPrice: p.actualPrice != null ? n(p.actualPrice) : null }))
-              );
-              const debt = total - n(o.totalPaid) - n(o.advancePayment);
+              const outstanding = computeOrderTotals(o as OrderForTotals, displayCurrency, fallbackRate).outstanding;
               return (
                 <Link key={o.id} href={`/orders/${o.id}`} className="flex items-center justify-between rounded-xl border p-3 hover:bg-muted/30">
                   <div>
@@ -399,7 +384,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
                     </p>
                     <p className="text-sm font-medium line-clamp-1">{o.description ?? "Замовлення"}</p>
                   </div>
-                  <span className="text-sm font-bold text-red-600">{formatMoney(debt, displayCurrency)}</span>
+                  <span className="text-sm font-bold text-red-600">{formatMoney(outstanding, displayCurrency)}</span>
                 </Link>
               );
             })}
@@ -411,10 +396,7 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
               const closedTotal = orders
                 .filter((o) => o.status === OrderStatus.CLOSED)
                 .reduce((sum, o) => {
-                  return sum + calcOrderTotal(
-                    o.works.map((w) => ({ price: n(w.price) })),
-                    o.parts.map((p) => ({ estimatedPrice: n(p.estimatedPrice), actualPrice: p.actualPrice != null ? n(p.actualPrice) : null }))
-                  );
+                  return sum + computeOrderTotals(o as OrderForTotals, displayCurrency, fallbackRate).orderTotal;
                 }, 0);
               return (
                 <>

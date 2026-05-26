@@ -1,7 +1,9 @@
 import { ClipboardList, Clock, Wallet, Users } from "lucide-react";
 import { OrderStatus, Currency } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { calcOrderTotal, calcIdleDays } from "@/lib/utils";
+import { calcIdleDays } from "@/lib/utils";
+import { aggregateDebtors, computeOrderTotals, type OrderForTotals } from "@/lib/finance";
+import { formatMoney } from "@/lib/currency";
 import { IDLE_THRESHOLD_DAYS, POSTPONED_REMINDER_DAYS } from "@/lib/constants";
 import { deepSerialize } from "@/lib/serialize";
 import { Greeting } from "@/components/dashboard/Greeting";
@@ -29,15 +31,15 @@ export default async function HomePage() {
     now.getTime() - POSTPONED_REMINDER_DAYS * 24 * 60 * 60 * 1000
   );
 
-  const [nonClosed, shopping, recentClosed, backlogCount, clientCount, settings] =
+  const [nonClosed, shopping, recentClosed, backlogCount, clientCount, settings, latestRate] =
     await Promise.all([
       prisma.order.findMany({
         where: { status: { not: OrderStatus.CLOSED } },
         include: {
           client: { select: { name: true, phone: true } },
           vehicle: { select: { plateNumber: true, make: true, model: true } },
-          works: { select: { price: true } },
-          parts: { select: { estimatedPrice: true, actualPrice: true } },
+          works: { select: { price: true, currency: true, exchangeRate: true } },
+          parts: { select: { estimatedPrice: true, actualPrice: true, currency: true, exchangeRate: true } },
         },
       }),
       prisma.shoppingListItem.findMany({
@@ -53,8 +55,8 @@ export default async function HomePage() {
         include: {
           client: { select: { name: true } },
           vehicle: { select: { plateNumber: true, make: true, model: true } },
-          works: { select: { price: true } },
-          parts: { select: { estimatedPrice: true, actualPrice: true } },
+          works: { select: { price: true, currency: true, exchangeRate: true } },
+          parts: { select: { estimatedPrice: true, actualPrice: true, currency: true, exchangeRate: true } },
         },
         orderBy: { updatedAt: "desc" },
         take: 5,
@@ -64,9 +66,11 @@ export default async function HomePage() {
       }),
       prisma.client.count({ where: { deletedAt: null } }),
       prisma.settings.findUnique({ where: { id: "singleton" } }),
+      prisma.exchangeRate.findFirst({ orderBy: { date: "desc" } }),
     ]);
 
   const displayCurrency = (settings?.displayCurrency ?? Currency.UAH) as Currency;
+  const fallbackRate = n(latestRate?.usdToUah) || 41;
   const nonClosedS = deepSerialize(nonClosed);
   const recentClosedS = deepSerialize(recentClosed);
 
@@ -92,36 +96,18 @@ export default async function HomePage() {
     .filter((o) => o.idleDays >= IDLE_THRESHOLD_DAYS)
     .sort((a, b) => b.idleDays - a.idleDays);
 
-  // Debt
-  const debtors = nonClosedS
-    .filter((o) => o.status !== OrderStatus.POSTPONED)
-    .map((o) => {
-      const total = calcOrderTotal(
-        o.works.map((w) => ({ price: n(w.price) })),
-        o.parts.map((p) => ({
-          estimatedPrice: n(p.estimatedPrice),
-          actualPrice: p.actualPrice != null ? n(p.actualPrice) : null,
-        }))
-      );
-      const debt = total - n(o.totalPaid) - n(o.advancePayment);
-      return { orderId: o.id, debt, client: o.client, vehicle: o.vehicle };
-    })
-    .filter((d) => d.debt > 0.01)
-    .sort((a, b) => b.debt - a.debt);
+  // Debt — конвертовані суми через aggregateDebtors (правильна валютна нормалізація)
+  const eligibleForDebt = nonClosedS.filter((o) => o.status !== OrderStatus.POSTPONED);
+  const { debtors, totalDebt } = aggregateDebtors(
+    eligibleForDebt as unknown as Parameters<typeof aggregateDebtors>[0],
+    displayCurrency,
+    fallbackRate
+  );
 
-  const totalDebt = debtors.reduce((s, d) => s + d.debt, 0);
-
-  // Week revenue
+  // Week revenue — правильна нормалізація через computeOrderTotals
   const weekRevenue = recentClosedS.reduce(
     (sum, o) =>
-      sum +
-      calcOrderTotal(
-        o.works.map((w) => ({ price: n(w.price) })),
-        o.parts.map((p) => ({
-          estimatedPrice: n(p.estimatedPrice),
-          actualPrice: p.actualPrice != null ? n(p.actualPrice) : null,
-        }))
-      ),
+      sum + computeOrderTotals(o as unknown as OrderForTotals, displayCurrency, fallbackRate).orderTotal,
     0
   );
 
@@ -184,7 +170,7 @@ export default async function HomePage() {
             icon={Wallet}
             value={debtors.length > 0 ? `${debtors.length}` : "0"}
             label="Боржників"
-            sub={debtors.length > 0 ? `${Math.round(totalDebt).toLocaleString("uk-UA")} ₴` : "все оплачено"}
+            sub={debtors.length > 0 ? formatMoney(totalDebt, displayCurrency) : "все оплачено"}
             variant={debtors.length > 0 ? "danger" : "default"}
           />
         </div>

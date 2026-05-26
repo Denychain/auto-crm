@@ -1,34 +1,31 @@
-﻿"use client";
+"use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Loader2, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { calcOrderTotal, cn } from "@/lib/utils";
-import { formatMoney, convert } from "@/lib/currency";
+import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { updateFinance } from "@/app/(crm)/orders/[id]/actions";
 import type { FullOrder } from "@/types/orders";
+import type { OrderTotals } from "@/lib/finance";
 
 interface FinanceBlockProps {
   order: FullOrder;
+  totals: OrderTotals;
 }
 
-export function FinanceBlock({ order }: FinanceBlockProps) {
-  const { displayCurrency, rate } = useCurrency();
-  const orderCurrency = (order as { currency?: string }).currency ?? "UAH";
+export function FinanceBlock({ order, totals }: FinanceBlockProps) {
+  const { displayCurrency } = useCurrency();
 
   function fmt(amount: number) {
-    const converted = convert(
-      { amount, currency: orderCurrency as import("@prisma/client").Currency },
-      displayCurrency,
-      rate ?? undefined
-    );
-    return formatMoney(converted, displayCurrency);
+    return formatMoney(amount, displayCurrency);
   }
 
+  // Локальний стан лише для editable inputs — щоб уникнути втрати фокусу (CRM-B01)
   const [estimatedPrice, setEstimatedPrice] = useState(
     Number(order.estimatedPrice).toFixed(2)
   );
@@ -37,22 +34,30 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(true);
 
-  const worksTotal = order.works.reduce((s, w) => s + Number(w.price), 0);
-  const partsTotal = order.parts.reduce(
-    (s, p) =>
-      s + (p.actualPrice != null ? Number(p.actualPrice) : Number(p.estimatedPrice)),
-    0
-  );
-  const orderTotal = calcOrderTotal(order.works, order.parts);
-  const paidNum = parseFloat(totalPaid) || 0;
-  const advNum = parseFloat(advPay) || 0;
-  const debt = orderTotal - paidNum - advNum;
+  // Синхронізуємо локальний стан з пропсами при зовнішніх змінах (наприклад,
+  // router.refresh() після збереження з іншого пристрою)
+  useEffect(() => {
+    setEstimatedPrice(Number(order.estimatedPrice).toFixed(2));
+  }, [order.estimatedPrice]);
+
+  useEffect(() => {
+    setAdvPay(Number(order.advancePayment).toFixed(2));
+  }, [order.advancePayment]);
+
+  useEffect(() => {
+    setTotalPaid(Number(order.totalPaid).toFixed(2));
+  }, [order.totalPaid]);
+
+  // Борг рахується з урахуванням локально відредагованих полів (до натискання «Зберегти»)
+  const localPaid = parseFloat(totalPaid) || 0;
+  const localAdv = parseFloat(advPay) || 0;
+  const debt = Math.max(0, totals.orderTotal - localPaid - localAdv);
 
   function handleSave() {
     startTransition(async () => {
       await updateFinance(order.id, {
-        totalPaid: paidNum,
-        advancePayment: advNum,
+        totalPaid: localPaid,
+        advancePayment: localAdv,
         estimatedPrice: parseFloat(estimatedPrice) || 0,
       });
       setSaved(true);
@@ -64,7 +69,7 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
   }
 
   function addToPaid(amount: number) {
-    const next = (paidNum + amount).toFixed(2);
+    const next = (localPaid + amount).toFixed(2);
     setTotalPaid(next);
     markDirty();
   }
@@ -82,7 +87,7 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
-        {/* Oriyentovna tsina */}
+        {/* Орієнтовна ціна */}
         <div className="flex items-center justify-between gap-2 py-1 text-sm">
           <span className="shrink-0 text-muted-foreground">Орієнтовна ціна</span>
           <Input
@@ -101,26 +106,26 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
 
         <Separator className="my-1" />
 
-        {/* Breakdown */}
+        {/* Розбивка — значення з серверно-обчисленого totals */}
         <div className={cn(row, "text-muted-foreground")}>
           <span>Роботи</span>
-          <span>{fmt(worksTotal)}</span>
+          <span>{fmt(totals.worksTotal)}</span>
         </div>
         <div className={cn(row, "text-muted-foreground")}>
           <span>Запчастини</span>
-          <span>{fmt(partsTotal)}</span>
+          <span>{fmt(totals.partsActualTotal)}</span>
         </div>
 
         <Separator className="my-1" />
 
         <div className={cn(row, "font-semibold")}>
           <span>Загальна сума</span>
-          <span>{fmt(orderTotal)}</span>
+          <span>{fmt(totals.orderTotal)}</span>
         </div>
 
         <Separator className="my-1" />
 
-        {/* Editable: advance */}
+        {/* Editable: завдаток */}
         <div className="flex items-center justify-between gap-2 py-1 text-sm">
           <span className="shrink-0 text-muted-foreground">Завдаток</span>
           <Input
@@ -137,7 +142,7 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
           />
         </div>
 
-        {/* Editable: total paid + quick buttons */}
+        {/* Editable: оплачено + quick buttons */}
         <div className="flex items-center justify-between gap-2 py-1 text-sm">
           <span className="shrink-0 text-muted-foreground">Оплачено</span>
           <Input
@@ -165,10 +170,13 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
             </button>
           ))}
         </div>
+        <p className="text-center text-[10px] text-muted-foreground">
+          Платіж у валюті замовлення ({((order as { currency?: string }).currency) ?? "UAH"})
+        </p>
 
         <Separator className="my-1" />
 
-        {/* Debt */}
+        {/* Борг */}
         <div
           className={cn(
             row,
@@ -182,7 +190,7 @@ export function FinanceBlock({ order }: FinanceBlockProps) {
           <span>{debt > 0.01 ? fmt(debt) : "✓"}</span>
         </div>
 
-        {/* Save button */}
+        {/* Кнопка збереження */}
         {!saved && (
           <Button
             onClick={handleSave}

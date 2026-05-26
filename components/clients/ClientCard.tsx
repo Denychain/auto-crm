@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Phone } from "lucide-react";
-import { formatPlate, calcOrderTotal } from "@/lib/utils";
+import { formatPlate } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
-import { Currency } from "@prisma/client";
-import { OrderStatus } from "@prisma/client";
+import { computeOrderTotals, type OrderForTotals } from "@/lib/finance-pure";
+import { Currency, OrderStatus } from "@prisma/client";
 
 interface Vehicle {
   id: string;
@@ -14,11 +14,13 @@ interface Vehicle {
 
 interface OrderSummary {
   status: OrderStatus;
+  currency?: string;
+  baseExchangeRate?: unknown;
   estimatedPrice: unknown;
   advancePayment: unknown;
   totalPaid: unknown;
-  works: { price: unknown }[];
-  parts: { estimatedPrice: unknown; actualPrice: unknown }[];
+  works: { price: unknown; currency?: string; exchangeRate?: unknown }[];
+  parts: { estimatedPrice: unknown; actualPrice: unknown; currency?: string; exchangeRate?: unknown }[];
 }
 
 interface ClientCardProps {
@@ -27,24 +29,24 @@ interface ClientCardProps {
   phone: string;
   vehicles: Vehicle[];
   orders: OrderSummary[];
+  displayCurrency?: Currency;
+  fallbackRate?: number;
 }
 
-function n(v: unknown): number {
-  if (v == null) return 0;
-  if (typeof v === "object" && "toNumber" in (v as object)) return (v as { toNumber(): number }).toNumber();
-  return Number(v);
-}
-
-export function ClientCard({ id, name, phone, vehicles, orders }: ClientCardProps) {
+export function ClientCard({
+  id,
+  name,
+  phone,
+  vehicles,
+  orders,
+  displayCurrency = Currency.UAH,
+  fallbackRate = 41,
+}: ClientCardProps) {
   const totalDebt = orders
     .filter((o) => o.status !== OrderStatus.CLOSED)
     .reduce((sum, o) => {
-      const total = calcOrderTotal(
-        o.works.map((w) => ({ price: n(w.price) })),
-        o.parts.map((p) => ({ estimatedPrice: n(p.estimatedPrice), actualPrice: p.actualPrice != null ? n(p.actualPrice) : null }))
-      );
-      const debt = total - n(o.totalPaid) - n(o.advancePayment);
-      return sum + (debt > 0.01 ? debt : 0);
+      const totals = computeOrderTotals(o as OrderForTotals, displayCurrency, fallbackRate);
+      return sum + (totals.outstanding > 0.01 ? totals.outstanding : 0);
     }, 0);
 
   return (
@@ -93,7 +95,7 @@ export function ClientCard({ id, name, phone, vehicles, orders }: ClientCardProp
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">Замовлень: {orders.length}</span>
         {totalDebt > 0.01 && (
-          <span className="font-semibold text-red-600">Борг: {formatMoney(totalDebt, Currency.UAH)}</span>
+          <span className="font-semibold text-red-600">Борг: {formatMoney(totalDebt, displayCurrency)}</span>
         )}
       </div>
     </Link>

@@ -19,6 +19,11 @@ function toNumber(val: DecimalLike): number {
 type WorkLike = { price: DecimalLike };
 type PartLike = { estimatedPrice: DecimalLike; actualPrice: DecimalLike };
 
+/**
+ * @deprecated Валютно-наївна функція — складає числа без конверсії.
+ * Використовуйте `computeOrderTotals` з `lib/finance.ts` замість неї.
+ * Лишається для зворотньої сумісності в нефінансових контекстах (dashboard, клієнти).
+ */
 export function calcOrderTotal(works: WorkLike[], parts: PartLike[]): number {
   const worksTotal = works.reduce((sum, w) => sum + toNumber(w.price), 0);
   const partsTotal = parts.reduce(
@@ -37,6 +42,10 @@ type OrderLike = {
   parts: PartLike[];
 };
 
+/**
+ * @deprecated Валютно-наївна функція.
+ * Використовуйте `computeOrderTotals(...).outstanding` з `lib/finance.ts` замість неї.
+ */
 export function calcDebt(order: OrderLike): number {
   const total = calcOrderTotal(order.works, order.parts);
   return total - toNumber(order.totalPaid) - toNumber(order.advancePayment);
