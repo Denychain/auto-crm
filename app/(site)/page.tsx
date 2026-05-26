@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CONTACTS } from "@/lib/constants";
+import { QrCode } from "@/components/site/QrCode";
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
@@ -78,11 +80,11 @@ export default function LandingPage() {
           </a>
 
           <nav className="nav" aria-label="Головна навігація">
-            <a href="#" className="active">Головна</a>
-            <a href="#">Авто з США</a>
-            <a href="#">Галерея</a>
-            <a href="#">Про майстра</a>
-            <a href="#">Контакти</a>
+            <a href="#hero" className="active">Головна</a>
+            <a href="#us-cars">Авто з США</a>
+            <a href="/gallery">Галерея</a>
+            <a href="#about-master">Про майстра</a>
+            <a href="#contacts">Контакти</a>
           </nav>
 
           <span className="header-divider" aria-hidden={true}></span>
@@ -100,11 +102,11 @@ export default function LandingPage() {
 
       {/* MOBILE MENU */}
       <div className={`mobile-menu${menuOpen ? " is-open" : ""}`} aria-hidden={!menuOpen}>
-        <a href="#" onClick={() => setMenuOpen(false)}><span>Головна</span><span className="num">01 / 05</span></a>
-        <a href="#" onClick={() => setMenuOpen(false)}><span>Авто з США</span><span className="num">02 / 05</span></a>
-        <a href="#" onClick={() => setMenuOpen(false)}><span>Галерея</span><span className="num">03 / 05</span></a>
-        <a href="#" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
-        <a href="#" onClick={() => setMenuOpen(false)}><span>Контакти</span><span className="num">05 / 05</span></a>
+        <a href="#hero" onClick={() => setMenuOpen(false)}><span>Головна</span><span className="num">01 / 05</span></a>
+        <a href="#us-cars" onClick={() => setMenuOpen(false)}><span>Авто з США</span><span className="num">02 / 05</span></a>
+        <a href="/gallery" onClick={() => setMenuOpen(false)}><span>Галерея</span><span className="num">03 / 05</span></a>
+        <a href="#about-master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
+        <a href="#contacts" onClick={() => setMenuOpen(false)}><span>Контакти</span><span className="num">05 / 05</span></a>
         <a href="tel:+380992334420" className="m-phone" onClick={() => setMenuOpen(false)}>
           <small>Подзвонити майстру</small>
           +380 99 233 44 20
@@ -112,7 +114,7 @@ export default function LandingPage() {
       </div>
 
       {/* HERO */}
-      <section className="hero">
+      <section className="hero" id="hero">
         <div className="hero-bg" aria-hidden={true}>
           <video className="hero-video" autoPlay muted loop playsInline preload="auto">
             <source src="/assets/hero-loop.mp4" type="video/mp4" />
@@ -158,13 +160,13 @@ export default function LandingPage() {
               </div>
 
               <div className="cta-row">
-                <a href="#" className="btn btn--primary" aria-label="Оцінити по фото в Telegram">
+                <a href={CONTACTS.telegram} target="_blank" rel="noopener" className="btn btn--primary" aria-label="Оцінити по фото в Telegram">
                   <svg className="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden={true}><path d="M21.94 4.34a1.2 1.2 0 0 0-1.27-.19L3.1 11.31c-.86.35-.83 1.6.05 1.91l4.42 1.53 1.68 5.45a.9.9 0 0 0 1.51.38l2.43-2.41 4.66 3.42a1.2 1.2 0 0 0 1.88-.7l3.16-15.55a1.2 1.2 0 0 0-.45-1zM9.7 14.79l9.13-7.59-6.94 8.7-2.19 4.61z"/></svg>
                   <span>Оцінити по фото в Telegram</span>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
 
-                <a href="#" className="btn btn--ghost" aria-label="Оцінити по фото в Viber">
+                <a href={CONTACTS.viber} className="btn btn--ghost" aria-label="Оцінити по фото в Viber">
                   <svg className="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden={true}><path d="M12 2C7 2 3 5 3 9.4c0 2.3 1.1 4.3 2.8 5.7l-.6 3.3c-.1.4.4.7.7.5l3-1.7c1 .3 2 .4 3.1.4 5 0 9-3 9-7.4S17 2 12 2zm-3.6 4.6c.4 0 .8.3 1 .8l.4 1c.1.4 0 .8-.3 1l-.4.3c.4 1 1.2 1.8 2.2 2.2l.3-.4c.3-.3.7-.4 1-.3l1 .4c.5.2.8.6.8 1l-.1.7c-.2.7-.9 1.2-1.7 1.2-2.6 0-5.4-2.8-5.4-5.4 0-.8.5-1.5 1.2-1.7l.7-.1z"/></svg>
                   <span>Оцінити по фото в Viber</span>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -221,7 +223,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 02 · ФІЛОСОФІЯ */}
+      {/* 02 · ФІЛОСОФІЯ / ПРО МАЙСТРА */}
+      <span id="about-master" style={{ display: "block", visibility: "hidden", height: 0 }} aria-hidden={true} />
       <section className="philosophy" id="philosophy">
         <div className="container">
 
@@ -273,7 +276,7 @@ export default function LandingPage() {
               </div>
 
               <div className="phil-foot">
-                <a href="#" className="btn btn--ghost">
+                <a href="/gallery" className="btn btn--ghost">
                   <span>Дивитися приклади робіт</span>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
@@ -698,11 +701,11 @@ export default function LandingPage() {
               <h4>Надішліть фото пошкодження — порахуємо за пару годин.</h4>
             </div>
             <div className="rhs">
-              <a href="#" className="btn btn--primary" aria-label="Оцінити в Telegram">
+              <a href={CONTACTS.telegram} target="_blank" rel="noopener" className="btn btn--primary" aria-label="Оцінити в Telegram">
                 <svg className="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden={true}><path d="M21.94 4.34a1.2 1.2 0 0 0-1.27-.19L3.1 11.31c-.86.35-.83 1.6.05 1.91l4.42 1.53 1.68 5.45a.9.9 0 0 0 1.51.38l2.43-2.41 4.66 3.42a1.2 1.2 0 0 0 1.88-.7l3.16-15.55a1.2 1.2 0 0 0-.45-1zM9.7 14.79l9.13-7.59-6.94 8.7-2.19 4.61z"/></svg>
                 <span>Telegram</span>
               </a>
-              <a href="#" className="btn btn--ghost" aria-label="Оцінити в Viber">
+              <a href={CONTACTS.viber} className="btn btn--ghost" aria-label="Оцінити в Viber">
                 <svg className="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden={true}><path d="M12 2C7 2 3 5 3 9.4c0 2.3 1.1 4.3 2.8 5.7l-.6 3.3c-.1.4.4.7.7.5l3-1.7c1 .3 2 .4 3.1.4 5 0 9-3 9-7.4S17 2 12 2zm-3.6 4.6c.4 0 .8.3 1 .8l.4 1c.1.4 0 .8-.3 1l-.4.3c.4 1 1.2 1.8 2.2 2.2l.3-.4c.3-.3.7-.4 1-.3l1 .4c.5.2.8.6.8 1l-.1.7c-.2.7-.9 1.2-1.7 1.2-2.6 0-5.4-2.8-5.4-5.4 0-.8.5-1.5 1.2-1.7l.7-.1z"/></svg>
                 <span>Viber</span>
               </a>
@@ -1054,7 +1057,7 @@ export default function LandingPage() {
                 <span className="k">// Прозоро · Незалежно</span>
                 <h4>Почитайте відгуки наших клієнтів на <em>Google Maps</em>.</h4>
               </div>
-              <a href="https://www.google.com/maps" target="_blank" rel="noopener" className="btn btn--primary">
+              <a href={CONTACTS.googleMaps} target="_blank" rel="noopener" className="btn btn--primary">
                 <span>Читати відгуки</span>
                 <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
@@ -1062,7 +1065,7 @@ export default function LandingPage() {
 
             <div className="rep-qr">
               <div className="qr-frame">
-                <div className="qr-placeholder" aria-label="QR-код для відгуку"></div>
+                <QrCode value={CONTACTS.googleMaps} size={128} />
               </div>
               <div className="qr-info">
                 <span className="k">// Вже були у нас?</span>
@@ -1138,7 +1141,7 @@ export default function LandingPage() {
                 </li>
               </ul>
 
-              <a href="#" className="btn btn--primary">
+              <a href={CONTACTS.telegram} target="_blank" rel="noopener" className="btn btn--primary">
                 <svg className="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="square" strokeLinejoin="miter" aria-hidden={true}>
                   <path d="M3 16 L21 16 L19 20 L5 20 Z"/>
                   <path d="M5 16 L5 9 L19 9 L19 16"/>
@@ -1259,7 +1262,7 @@ export default function LandingPage() {
       </section>
 
       {/* 10 · ФУТЕР */}
-      <footer className="site-footer">
+      <footer className="site-footer" id="contacts">
         <div className="container">
 
           {/* persistent warning strip */}
@@ -1280,9 +1283,9 @@ export default function LandingPage() {
 
               <h5>Навігація</h5>
               <ul className="footer-nav">
-                <li><a href="#">Головна</a></li>
+                <li><a href="#hero">Головна</a></li>
                 <li><a href="#us-cars">Авто з США</a></li>
-                <li><a href="#">Галерея робіт</a></li>
+                <li><a href="/gallery">Галерея робіт</a></li>
                 <li><a href="#workflow">Правила сервісу</a></li>
                 <li><a href="#pricing">Прайс</a></li>
                 <li><a href="#faq">FAQ</a></li>
@@ -1298,7 +1301,7 @@ export default function LandingPage() {
               </div>
 
               <div className="footer-msgs">
-                <a href="#" className="msg-btn">
+                <a href={CONTACTS.telegram} target="_blank" rel="noopener" className="msg-btn">
                   <svg className="ico tg" viewBox="0 0 24 24" fill="currentColor"><path d="M21.94 4.34a1.2 1.2 0 0 0-1.27-.19L3.1 11.31c-.86.35-.83 1.6.05 1.91l4.42 1.53 1.68 5.45a.9.9 0 0 0 1.51.38l2.43-2.41 4.66 3.42a1.2 1.2 0 0 0 1.88-.7l3.16-15.55a1.2 1.2 0 0 0-.45-1z"/></svg>
                   <div>
                     <span>Telegram</span>
@@ -1306,7 +1309,7 @@ export default function LandingPage() {
                   </div>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
-                <a href="#" className="msg-btn">
+                <a href={CONTACTS.viber} className="msg-btn">
                   <svg className="ico viber" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 2 3 5 3 9.4c0 2.3 1.1 4.3 2.8 5.7l-.6 3.3c-.1.4.4.7.7.5l3-1.7c1 .3 2 .4 3.1.4 5 0 9-3 9-7.4S17 2 12 2z"/></svg>
                   <div>
                     <span>Viber</span>
@@ -1314,7 +1317,7 @@ export default function LandingPage() {
                   </div>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
-                <a href="#" className="msg-btn">
+                <a href={CONTACTS.instagram} target="_blank" rel="noopener" className="msg-btn">
                   <svg className="ico ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="square">
                     <rect x="3" y="3" width="18" height="18" rx="4"/>
                     <circle cx="12" cy="12" r="4"/>
@@ -1371,7 +1374,7 @@ export default function LandingPage() {
                 </span>
               </div>
 
-              <a href="https://maps.google.com/?q=Ivano-Frankivsk" target="_blank" rel="noopener" className="route-btn">
+              <a href={CONTACTS.googleMaps} target="_blank" rel="noopener" className="route-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="square"><path d="M12 21s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
                 Побудувати маршрут
               </a>

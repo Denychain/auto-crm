@@ -1,5 +1,14 @@
 import { OrderStatus, PartStatus } from "@prisma/client";
 
+export const CONTACTS = {
+  phone: "+380992334420",
+  telegram: "https://t.me/+380992334420",
+  viber: "viber://chat?number=%2B380992334420",
+  instagram:
+    "https://www.instagram.com/nice.car.if?igsh=MTI3Y2x2OWd1ODU0dw==",
+  googleMaps: "https://maps.app.goo.gl/8yUeMbnw5k14jL7w9",
+};
+
 export const IDLE_THRESHOLD_DAYS = 3;
 export const DREAM_FUND_PERCENT = 0.05;
 export const POSTPONED_REMINDER_DAYS = 30;
