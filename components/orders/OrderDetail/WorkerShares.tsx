@@ -522,6 +522,74 @@ function TemplatePicker({
   );
 }
 
+// ── Default template hint (CRM-U02) ──────────────────────────────────────────
+
+function DefaultTemplateHint({
+  template,
+  orderId,
+  workers,
+  disabled,
+  onApplied,
+}: {
+  template: TemplateWithRules;
+  orderId: string;
+  workers: Worker[];
+  disabled: boolean;
+  onApplied: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [needWorkers, setNeedWorkers] = useState<WorkerRole[]>([]);
+  const [addDialogRole, setAddDialogRole] = useState<WorkerRole | undefined>();
+
+  function handleApply() {
+    startTransition(async () => {
+      const { needWorkers: missing } = await applyShareTemplate(orderId, template.id);
+      onApplied();
+      if (missing.length > 0) setNeedWorkers(missing);
+    });
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-primary leading-snug">
+            ⚡ {template.name}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {template.rules
+              .map((r) => `${ROLE_LABELS[r.role as WorkerRole]} ${r.percent}%`)
+              .join(" / ")}
+          </p>
+        </div>
+        <button
+          onClick={handleApply}
+          disabled={disabled || isPending}
+          className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {isPending ? <Loader2 className="size-3 animate-spin" /> : "Застосувати"}
+        </button>
+      </div>
+
+      {/* Dialogs for roles that need workers assigned */}
+      {needWorkers.map((role) => (
+        <AddWorkerDialog
+          key={role}
+          open={addDialogRole === role || (needWorkers[0] === role && !addDialogRole)}
+          onClose={() => {
+            setNeedWorkers((prev) => prev.filter((r) => r !== role));
+            setAddDialogRole(undefined);
+            onApplied();
+          }}
+          orderId={orderId}
+          workers={workers.filter((w) => (w.roles as WorkerRole[]).includes(role))}
+          preselectedRole={role}
+        />
+      ))}
+    </>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface WorkerSharesProps {
@@ -545,6 +613,9 @@ export function WorkerShares({
   const [isPending, startTransition] = useTransition();
   const { displayCurrency } = useCurrency();
   const [addOpen, setAddOpen] = useState(false);
+
+  // CRM-U02: знаходимо дефолтний шаблон для автопідказки
+  const defaultTemplate = templates.find((t) => t.isDefault) ?? null;
 
   // Усі суми приходять з серверно-обчисленого totals — жодної локальної математики
   const base = totals.poolForPeople;
@@ -621,6 +692,17 @@ export function WorkerShares({
           workers={workers}
           disabled={isPending}
         />
+
+        {/* ── CRM-U02: підказка дефолтного шаблону ────────── */}
+        {initialShares.length === 0 && defaultTemplate && (
+          <DefaultTemplateHint
+            template={defaultTemplate}
+            orderId={orderId}
+            workers={workers}
+            disabled={isPending}
+            onApplied={() => router.refresh()}
+          />
+        )}
 
         {/* ── Список учасників ─────────────────────────── */}
         {initialShares.length === 0 ? (

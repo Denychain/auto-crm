@@ -77,10 +77,10 @@ export function ShoppingList({ items }: ShoppingListProps) {
 
       {items.length === 0 && (
         <div className="py-16 text-center">
-          <p className="text-4xl">🧹</p>
+          <p className="text-4xl">🛒</p>
           <p className="mt-2 font-medium text-muted-foreground">Список порожній</p>
           <p className="mt-1 text-sm text-muted-foreground/70">
-            Додайте матеріали що є в наявності
+            Натисніть «Додати позицію» щоб занести що треба купити
           </p>
         </div>
       )}

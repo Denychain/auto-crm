@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useTransition } from "react";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toggleShoppingItem, removeShoppingItem } from "@/app/(crm)/shopping/actions";
 
@@ -26,30 +26,34 @@ export function ShoppingItem({ id, name, isNeeded }: ShoppingItemProps) {
     });
   }
 
+  // CRM-U01: галочка (✓) = куплено = isNeeded=false (в наявності)
+  //          порожнє коло  = треба купити = isNeeded=true
+  const isPurchased = !isNeeded;
+
   return (
     <div
       className={cn(
         "flex items-center gap-3 rounded-xl border p-4 transition-colors",
         isNeeded
-          ? "border-orange-300 bg-orange-50"
-          : "border-border bg-card"
+          ? "border-orange-200 bg-orange-50"
+          : "border-green-200 bg-green-50/40"
       )}
     >
-      {/* Toggle */}
+      {/* Toggle — натиснути: треба→куплено або куплено→скінчилось */}
       <button
         onClick={handleToggle}
         disabled={isPending}
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50",
-          isNeeded
-            ? "border-orange-500 bg-orange-500 text-white"
-            : "border-muted-foreground/40 hover:border-orange-400"
+          isPurchased
+            ? "border-green-500 bg-green-500 text-white"
+            : "border-orange-400 bg-transparent hover:border-orange-500"
         )}
-        aria-label={isNeeded ? "Позначити як куплене" : "Позначити як потрібне"}
+        aria-label={isPurchased ? "Позначити «скінчилось»" : "Позначити як куплене"}
       >
         {isPending ? (
           <Loader2 className="size-3.5 animate-spin" />
-        ) : isNeeded ? (
+        ) : isPurchased ? (
           <span className="text-xs font-bold leading-none">✓</span>
         ) : null}
       </button>
@@ -58,11 +62,24 @@ export function ShoppingItem({ id, name, isNeeded }: ShoppingItemProps) {
       <span
         className={cn(
           "flex-1 text-base font-medium leading-snug",
-          isNeeded ? "text-orange-900" : "text-foreground"
+          isNeeded ? "text-orange-900" : "text-green-900/80 line-through-none"
         )}
       >
         {name}
       </span>
+
+      {/* «Скінчилось» label for purchased items */}
+      {isPurchased && !isPending && (
+        <button
+          onClick={handleToggle}
+          disabled={isPending}
+          className="flex items-center gap-1 rounded-lg border border-orange-200 px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 disabled:opacity-40"
+          title="Скінчилось — повернути в «Треба купити»"
+        >
+          <RotateCcw className="size-3" />
+          Скінчилось
+        </button>
+      )}
 
       {/* Delete */}
       <button

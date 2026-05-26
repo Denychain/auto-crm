@@ -7,7 +7,8 @@ import { requireAuth } from "@/lib/auth";
 export async function createShoppingItem(name: string): Promise<void> {
   await requireAuth();
   await prisma.shoppingListItem.create({
-    data: { name: name.trim() },
+    // CRM-U01: новий товар завжди йде в «Треба купити» (isNeeded=true)
+    data: { name: name.trim(), isNeeded: true },
   });
   revalidatePath("/shopping");
   revalidatePath("/");

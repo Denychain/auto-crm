@@ -1,4 +1,4 @@
-import { PrismaClient, OrderStatus, PartStatus, PhotoType } from "@prisma/client";
+import { PrismaClient, OrderStatus, PartStatus, PhotoType, WorkerRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -79,6 +79,8 @@ async function main() {
   await prisma.client.deleteMany();
   await prisma.dreamFund.deleteMany();
   await prisma.shoppingListItem.deleteMany();
+  await prisma.shareTemplateRule.deleteMany();
+  await prisma.shareTemplate.deleteMany();
 
   // ── Clients ──────────────────────────────────────────────────────────────
   const clients = await Promise.all(
@@ -557,6 +559,41 @@ async function main() {
     ],
   });
   console.log("  ✓ 7 shopping list items");
+
+  // ── ShareTemplates (CRM-U02) ─────────────────────────────────────────────
+  // Дефолтний шаблон: власник 50% / маляр 50% від залишку після матеріалів
+  const defaultTemplate = await prisma.shareTemplate.create({
+    data: {
+      name: "Власник 50% / Майстер 50%",
+      description: "Рівний розподіл між власником і майстром після матеріалів",
+      isDefault: true,
+      sortOrder: 0,
+    },
+  });
+  await prisma.shareTemplateRule.createMany({
+    data: [
+      { templateId: defaultTemplate.id, role: WorkerRole.OWNER,   percent: 50 },
+      { templateId: defaultTemplate.id, role: WorkerRole.PAINTER,  percent: 50 },
+    ],
+  });
+
+  // Додатковий шаблон для більших команд
+  const tripleTemplate = await prisma.shareTemplate.create({
+    data: {
+      name: "Власник 40% / Майстер 40% / Підготовщик 20%",
+      description: "Три учасники: власник, маляр і підготовщик",
+      isDefault: false,
+      sortOrder: 1,
+    },
+  });
+  await prisma.shareTemplateRule.createMany({
+    data: [
+      { templateId: tripleTemplate.id, role: WorkerRole.OWNER,   percent: 40 },
+      { templateId: tripleTemplate.id, role: WorkerRole.PAINTER,  percent: 40 },
+      { templateId: tripleTemplate.id, role: WorkerRole.PREP,     percent: 20 },
+    ],
+  });
+  console.log("  ✓ 2 share templates (1 default)");
 
   await seedOwnerUser();
 
