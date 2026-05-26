@@ -2,10 +2,10 @@ import Link from "next/link";
 import { formatPlate } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
 import { Currency } from "@prisma/client";
-import type { OrderPlanFact } from "@/lib/finance";
+import type { PlanFactRow } from "@/lib/finance";
 
 interface PlanFactTableProps {
-  orders: OrderPlanFact[];
+  orders: PlanFactRow[];
   displayCurrency?: Currency;
 }
 

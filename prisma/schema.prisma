@@ -121,6 +121,7 @@ model Order {
   
   // -- Дати та Таймери --
   readyDate        DateTime?   // Фіксується, коли статус стає DONE (для лічильника простою)
+  closedAt         DateTime?   // Фіксується, коли статус стає CLOSED (для фільтрації фінзвітів)
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 

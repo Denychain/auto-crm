@@ -2,10 +2,14 @@
  * Чисті фінансові функції без жодного серверного/Prisma імпорту.
  * Безпечно імпортувати з клієнтських компонентів ("use client").
  *
- * Серверні агрегати (handleOrderClosed, aggregateFinanceData) лишаються в lib/finance.ts.
+ * Серверні агрегати (handleOrderClosed) лишаються в lib/finance.ts.
+ * Агрегаційні функції (aggregateClosedPeriod, aggregateActiveDebt,
+ * buildPlanFactRows, buildWorkerGroups) — тут, щоб їх можна тестувати без Prisma.
  */
 import { Currency } from "@prisma/client";
 import { normalizeToUSD } from "./currency";
+
+export const DREAM_FUND_PERCENT = 0.05;
 
 // ── Low-level helpers ──────────────────────────────────────────────────────────
 
@@ -177,7 +181,7 @@ export function computeOrderDebt(
   };
 }
 
-type DebtorOrder = OrderForTotals & {
+export type DebtorOrder = OrderForTotals & {
   id: string;
   client: { name: string; phone: string };
   vehicle: { plateNumber: string; make: string; model: string };
@@ -211,4 +215,228 @@ export function aggregateDebtors(
 
   debtors.sort((a, b) => b.debt - a.debt);
   return { debtors, totalDebt };
+}
+
+// ── Агрегаційні функції (чисті, без Prisma) ────────────────────────────────────
+
+/** Спільний контекст валюти та курсу для всіх агрегацій */
+export interface AggregationCtx {
+  displayCurrency: Currency;
+  /** Поточний курс USD→UAH (для активних боргів) */
+  fallbackRate: number;
+}
+
+/** Тип WorkerShare для фінансових агрегатів */
+export interface WorkerShareForFinance {
+  amount: unknown;
+  currency?: string;
+  exchangeRate?: unknown;
+  roleSnapshot?: string | null;
+  workerId?: string | null;
+  workerName: string;
+}
+
+/** Тип замовлення для фінансових агрегатів (розширює OrderForTotals) */
+export interface OrderForFinance extends OrderForTotals {
+  id: string;
+  status?: string;
+  client: { name: string; phone?: string };
+  vehicle: { plateNumber: string; make: string; model: string };
+  workerShares: WorkerShareForFinance[];
+}
+
+/** Результат агрегації закритих замовлень за період */
+export interface ClosedPeriodResult {
+  revenue: number;
+  materials: number;
+  /** Виплати майстрам (role ≠ OWNER) */
+  wagesMasters: number;
+  /** Заробіток власника (role = OWNER) */
+  wagesOwner: number;
+  /** 5% від виручки → DreamFund */
+  dreamFundContribution: number;
+  /** Контрольна сума: має бути ~0 при правильному розподілі */
+  unallocated: number;
+}
+
+/** Результат агрегації активних боргів */
+export interface ActiveDebtResult {
+  totalDebt: number;
+  debtorsCount: number;
+}
+
+/** Рядок план/факт для таблиці матеріалів */
+export interface PlanFactRow {
+  id: string;
+  client: { name: string };
+  vehicle: { plateNumber: string; make: string; model: string };
+  planMaterials: number;
+  factMaterials: number;
+  diff: number;
+}
+
+/** Група виплат одного майстра */
+export interface WorkerGroup {
+  /** Унікальний ключ: workerId+role або workerName для legacy записів */
+  groupKey: string;
+  workerName: string;
+  /** Мітка ролі (якщо є roleSnapshot) */
+  roleLabel: string | null;
+  /** true якщо role = OWNER */
+  isOwner: boolean;
+  total: number;
+  orders: {
+    orderId: string;
+    vehiclePlate: string;
+    clientName: string;
+    amount: number;
+  }[];
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  PREP: "Підготовщик",
+  PAINTER: "Маляр",
+  POLISHER: "Полірувальник",
+  OWNER: "Власник",
+  OTHER: "Інше",
+};
+
+/**
+ * Агрегує фінансові метрики по закритих замовленнях за період.
+ * Усі суми нормалізуються до ctx.displayCurrency через per-record exchangeRate.
+ */
+export function aggregateClosedPeriod(
+  closedOrders: OrderForFinance[],
+  ctx: AggregationCtx,
+): ClosedPeriodResult {
+  const { displayCurrency, fallbackRate } = ctx;
+  let revenue = 0;
+  let materials = 0;
+  let wagesMasters = 0;
+  let wagesOwner = 0;
+
+  for (const o of closedOrders) {
+    revenue += computeOrderTotals(o, displayCurrency, fallbackRate).orderTotal;
+
+    for (const p of o.parts) {
+      const c = (p.currency as Currency) ?? Currency.UAH;
+      const v = p.actualPrice != null ? p.actualPrice : p.estimatedPrice;
+      materials += toDisplay(v, c, p.exchangeRate, displayCurrency, fallbackRate);
+    }
+
+    for (const ws of o.workerShares) {
+      const c = (ws.currency as Currency) ?? Currency.UAH;
+      const amt = toDisplay(ws.amount, c, ws.exchangeRate, displayCurrency, fallbackRate);
+      if (ws.roleSnapshot === "OWNER") {
+        wagesOwner += amt;
+      } else {
+        wagesMasters += amt;
+      }
+    }
+  }
+
+  const dreamFundContribution = revenue * DREAM_FUND_PERCENT;
+  const unallocated = revenue - materials - wagesMasters - wagesOwner - dreamFundContribution;
+
+  return { revenue, materials, wagesMasters, wagesOwner, dreamFundContribution, unallocated };
+}
+
+/**
+ * Агрегує активну заборгованість (без POSTPONED-замовлень).
+ * Використовує поточний курс (fallbackRate) — борг це майбутнє надходження.
+ */
+export function aggregateActiveDebt(
+  activeOrders: Array<OrderForTotals & { status?: string }>,
+  ctx: AggregationCtx,
+): ActiveDebtResult {
+  const { displayCurrency, fallbackRate } = ctx;
+  let totalDebt = 0;
+  let debtorsCount = 0;
+
+  for (const o of activeOrders) {
+    // Захист: POSTPONED не рахуємо у борг
+    if ((o.status as string) === "POSTPONED") continue;
+    const outstanding = computeOrderTotals(o, displayCurrency, fallbackRate).outstanding;
+    if (outstanding > 0.01) {
+      totalDebt += outstanding;
+      debtorsCount++;
+    }
+  }
+
+  return { totalDebt, debtorsCount };
+}
+
+/**
+ * Будує рядки план/факт по матеріалах для кожного закритого замовлення.
+ * Конвертує per-part через toDisplay (FIN-05 fix).
+ */
+export function buildPlanFactRows(
+  closedOrders: OrderForFinance[],
+  ctx: AggregationCtx,
+): PlanFactRow[] {
+  const { displayCurrency, fallbackRate } = ctx;
+  return closedOrders
+    .map((o) => {
+      const planMaterials = o.parts.reduce((s, p) => {
+        const c = (p.currency as Currency) ?? Currency.UAH;
+        return s + toDisplay(p.estimatedPrice, c, p.exchangeRate, displayCurrency, fallbackRate);
+      }, 0);
+      const factMaterials = o.parts.reduce((s, p) => {
+        const c = (p.currency as Currency) ?? Currency.UAH;
+        const v = p.actualPrice != null ? p.actualPrice : p.estimatedPrice;
+        return s + toDisplay(v, c, p.exchangeRate, displayCurrency, fallbackRate);
+      }, 0);
+      return {
+        id: o.id,
+        client: { name: o.client.name },
+        vehicle: o.vehicle,
+        planMaterials,
+        factMaterials,
+        diff: factMaterials - planMaterials,
+      };
+    })
+    .sort((a, b) => b.diff - a.diff);
+}
+
+/**
+ * Групує виплати по майстрах. Суми нормалізовані до ctx.displayCurrency.
+ * isOwner = true для role = OWNER (FIN-09 fix).
+ */
+export function buildWorkerGroups(
+  closedOrders: OrderForFinance[],
+  ctx: AggregationCtx,
+): WorkerGroup[] {
+  const { displayCurrency, fallbackRate } = ctx;
+  const workerMap = new Map<string, WorkerGroup>();
+
+  for (const o of closedOrders) {
+    for (const ws of o.workerShares) {
+      const role = ws.roleSnapshot;
+      const workerId = ws.workerId;
+      const groupKey = workerId && role ? `${workerId}::${role}` : ws.workerName;
+
+      if (!workerMap.has(groupKey)) {
+        workerMap.set(groupKey, {
+          groupKey,
+          workerName: ws.workerName,
+          roleLabel: role ? (ROLE_LABELS[role] ?? role) : null,
+          isOwner: role === "OWNER",
+          total: 0,
+          orders: [],
+        });
+      }
+      const group = workerMap.get(groupKey)!;
+      const c = (ws.currency as Currency) ?? Currency.UAH;
+      const amt = toDisplay(ws.amount, c, ws.exchangeRate, displayCurrency, fallbackRate);
+      group.total += amt;
+      group.orders.push({
+        orderId: o.id,
+        vehiclePlate: o.vehicle.plateNumber,
+        clientName: o.client.name,
+        amount: amt,
+      });
+    }
+  }
+
+  return [...workerMap.values()].sort((a, b) => b.total - a.total);
 }

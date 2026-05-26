@@ -1,56 +1,94 @@
-import { TrendingUp, Package, Wallet, AlertCircle } from "lucide-react";
+import { TrendingUp, Package, Users, User, Heart, Scale } from "lucide-react";
 import { formatMoney } from "@/lib/currency";
 import { Currency } from "@prisma/client";
-import type { FinanceAggregation } from "@/lib/finance";
+import { cn } from "@/lib/utils";
 
 interface FinanceSummaryCardsProps {
-  data: FinanceAggregation;
+  revenue: number;
+  materials: number;
+  wagesMasters: number;
+  wagesOwner: number;
+  dreamFundContribution: number;
+  unallocated: number;
   periodLabel: string;
-  displayCurrency?: Currency;
+  displayCurrency: Currency;
 }
 
-export function FinanceSummaryCards({ data, periodLabel, displayCurrency = Currency.UAH }: FinanceSummaryCardsProps) {
+export function FinanceSummaryCards({
+  revenue,
+  materials,
+  wagesMasters,
+  wagesOwner,
+  dreamFundContribution,
+  unallocated,
+  periodLabel,
+  displayCurrency,
+}: FinanceSummaryCardsProps) {
+  const isUnallocatedOk = Math.abs(unallocated) < 1;
+
   const cards = [
     {
       icon: TrendingUp,
       label: "Виручка",
-      value: data.revenue,
+      value: revenue,
       colorClass: "text-green-800 bg-green-50",
+      hint: null,
     },
     {
       icon: Package,
-      label: "Витрати на матеріали",
-      value: data.materials,
+      label: "Матеріали",
+      value: materials,
       colorClass: "text-orange-800 bg-orange-50",
+      hint: null,
     },
     {
-      icon: Wallet,
-      label: "Чистий прибуток",
-      value: data.netProfit,
-      colorClass:
-        data.netProfit >= 0 ? "text-blue-800 bg-blue-50" : "text-red-800 bg-red-50",
+      icon: Users,
+      label: "Виплачено майстрам",
+      value: wagesMasters,
+      colorClass: "text-blue-800 bg-blue-50",
+      hint: null,
     },
     {
-      icon: AlertCircle,
-      label: "Заборгованість",
-      value: data.debt,
-      colorClass:
-        data.debt > 0.01
-          ? "text-red-800 bg-red-50"
-          : "text-green-800 bg-green-50",
+      icon: User,
+      label: "Заробив власник",
+      value: wagesOwner,
+      colorClass: "text-emerald-800 bg-emerald-50",
+      hint: null,
+    },
+    {
+      icon: Heart,
+      label: "Фонд «На мрію»",
+      value: dreamFundContribution,
+      colorClass: "text-purple-800 bg-purple-50",
+      hint: "5% від виручки",
+    },
+    {
+      icon: Scale,
+      label: "Нерозподілено",
+      value: unallocated,
+      colorClass: isUnallocatedOk
+        ? "text-gray-600 bg-gray-50"
+        : unallocated > 0
+        ? "text-amber-800 bg-amber-50"
+        : "text-red-800 bg-red-50",
+      hint: "Має бути ~0 — контрольна сума",
     },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {cards.map(({ icon: Icon, label, value, colorClass }) => (
-        <div key={label} className={`flex flex-col gap-2 rounded-xl p-4 ${colorClass}`}>
+      {cards.map(({ icon: Icon, label, value, colorClass, hint }) => (
+        <div key={label} className={cn("flex flex-col gap-2 rounded-xl p-4", colorClass)}>
           <div className="flex items-center gap-1.5 opacity-80">
             <Icon className="size-3.5 shrink-0" />
             <span className="text-xs font-medium leading-tight">{label}</span>
           </div>
-          <p className="text-lg font-bold leading-none">{formatMoney(value, displayCurrency)}</p>
-          <p className="text-[10px] opacity-50">за {periodLabel.toLowerCase()}</p>
+          <p className="text-lg font-bold leading-none tabular-nums">
+            {formatMoney(value, displayCurrency)}
+          </p>
+          <p className="text-[10px] opacity-50">
+            {hint ?? `за ${periodLabel.toLowerCase()}`}
+          </p>
         </div>
       ))}
     </div>

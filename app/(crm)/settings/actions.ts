@@ -41,3 +41,19 @@ export async function setManualRate(rate: number): Promise<void> {
   revalidatePath("/settings");
   revalidatePath("/", "layout");
 }
+
+/** Перемикає глобальну валюту відображення і перезавантажує весь layout */
+export async function setDisplayCurrency(currency: Currency): Promise<void> {
+  await requireAuth();
+  await prisma.settings.upsert({
+    where: { id: "singleton" },
+    update: { displayCurrency: currency },
+    create: {
+      id: "singleton",
+      displayCurrency: currency,
+      defaultCurrency: currency,
+      autoUpdateRate: true,
+    },
+  });
+  revalidatePath("/", "layout");
+}

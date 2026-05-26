@@ -4,13 +4,22 @@ import { Currency } from "@prisma/client";
 interface RevenueBreakdownProps {
   revenue: number;
   materials: number;
-  wages: number;
+  wagesMasters: number;
+  wagesOwner: number;
+  dreamFundContribution: number;
+  unallocated: number;
   displayCurrency?: Currency;
 }
 
-export function RevenueBreakdown({ revenue, materials, wages, displayCurrency = Currency.UAH }: RevenueBreakdownProps) {
-  const ownerProfit = Math.max(0, revenue - materials - wages);
-
+export function RevenueBreakdown({
+  revenue,
+  materials,
+  wagesMasters,
+  wagesOwner,
+  dreamFundContribution,
+  unallocated,
+  displayCurrency = Currency.UAH,
+}: RevenueBreakdownProps) {
   if (revenue < 0.01) {
     return (
       <div className="flex flex-col gap-2">
@@ -21,9 +30,36 @@ export function RevenueBreakdown({ revenue, materials, wages, displayCurrency = 
   }
 
   const segments = [
-    { label: "Матеріали", value: materials, barClass: "bg-orange-400", dotClass: "bg-orange-400" },
-    { label: "Зарплати майстрів", value: wages, barClass: "bg-blue-400", dotClass: "bg-blue-400" },
-    { label: "Чистий заробіток", value: ownerProfit, barClass: "bg-green-500", dotClass: "bg-green-500" },
+    {
+      label: "Матеріали",
+      value: materials,
+      barClass: "bg-orange-400",
+      dotClass: "bg-orange-400",
+    },
+    {
+      label: "Майстри",
+      value: wagesMasters,
+      barClass: "bg-blue-400",
+      dotClass: "bg-blue-400",
+    },
+    {
+      label: "Власник",
+      value: wagesOwner,
+      barClass: "bg-green-500",
+      dotClass: "bg-green-500",
+    },
+    {
+      label: "Фонд мрії",
+      value: dreamFundContribution,
+      barClass: "bg-purple-400",
+      dotClass: "bg-purple-400",
+    },
+    {
+      label: "Нерозподілено",
+      value: Math.abs(unallocated),
+      barClass: "bg-gray-300",
+      dotClass: "bg-gray-400",
+    },
   ];
 
   return (
@@ -50,6 +86,7 @@ export function RevenueBreakdown({ revenue, materials, wages, displayCurrency = 
       <div className="flex flex-col gap-2">
         {segments.map((s) => {
           const pct = revenue > 0 ? (s.value / revenue) * 100 : 0;
+          if (s.value < 0.01 && pct < 0.1) return null;
           return (
             <div key={s.label} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">

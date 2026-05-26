@@ -5,21 +5,17 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { formatPlate } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
-import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { Currency } from "@prisma/client";
 import type { WorkerGroup } from "@/lib/finance";
 import { Badge } from "@/components/ui/badge";
 
-const ROLE_LABELS: Record<string, string> = {
-  PREP: "Підготовщик",
-  PAINTER: "Маляр",
-  POLISHER: "Полірувальник",
-  OWNER: "Власник",
-  OTHER: "Інше",
-};
+interface WorkerPayoutsTableProps {
+  groups: WorkerGroup[];
+  displayCurrency?: Currency;
+}
 
-export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
+export function WorkerPayoutsTable({ groups, displayCurrency = Currency.UAH }: WorkerPayoutsTableProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { displayCurrency } = useCurrency();
 
   if (groups.length === 0) {
     return (
@@ -32,8 +28,6 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
     );
   }
 
-  const totalWages = groups.reduce((s, g) => s + g.total, 0);
-
   function toggle(key: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -42,18 +36,16 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
     });
   }
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">👷 Виплати майстрам</h2>
-        <span className="text-sm font-bold">
-          {formatMoney(totalWages, displayCurrency)}
-        </span>
-      </div>
+  const ownerGroups = groups.filter((g) => g.isOwner);
+  const masterGroups = groups.filter((g) => !g.isOwner);
 
+  const totalOwner = ownerGroups.reduce((s, g) => s + g.total, 0);
+  const totalMasters = masterGroups.reduce((s, g) => s + g.total, 0);
+
+  function GroupList({ list }: { list: WorkerGroup[] }) {
+    return (
       <div className="overflow-hidden rounded-xl border">
-        {groups.map((g) => {
-          // key = workerId if available, else workerName+role
+        {list.map((g) => {
           const open = expanded.has(g.groupKey);
           return (
             <div key={g.groupKey} className="border-b last:border-0">
@@ -73,7 +65,7 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">
+                  <span className="font-bold tabular-nums">
                     {formatMoney(g.total, displayCurrency)}
                   </span>
                   {open ? (
@@ -100,7 +92,7 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
                           {o.clientName}
                         </span>
                       </div>
-                      <span className="shrink-0 font-medium">
+                      <span className="shrink-0 font-medium tabular-nums">
                         {formatMoney(o.amount, displayCurrency)}
                       </span>
                     </Link>
@@ -111,6 +103,36 @@ export function WorkerPayoutsTable({ groups }: { groups: WorkerGroup[] }) {
           );
         })}
       </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Owner section */}
+      {ownerGroups.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">👤 Заробив власник</h2>
+            <span className="text-sm font-bold tabular-nums text-emerald-700">
+              {formatMoney(totalOwner, displayCurrency)}
+            </span>
+          </div>
+          <GroupList list={ownerGroups} />
+        </div>
+      )}
+
+      {/* Masters section */}
+      {masterGroups.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">👷 Виплати майстрам</h2>
+            <span className="text-sm font-bold tabular-nums">
+              {formatMoney(totalMasters, displayCurrency)}
+            </span>
+          </div>
+          <GroupList list={masterGroups} />
+        </div>
+      )}
     </div>
   );
 }
