@@ -4131,3 +4131,248 @@ h1.ph-title .thin{display:block;font-weight:600;color:var(--ink-2);font-size:.42
   .ph-counters > div{flex:1 1 100%}
   .scanner-info{grid-template-columns:1fr}
 }
+
+/* ============================================================
+   MASTER PAGE — /master (Про майстра)
+   Scoped hero classes (.ms-hero, .ms-hero-content, .ms-manifesto)
+   avoid conflicts with landing page .hero and .manifesto.
+   All other classes are unique to this page.
+   ============================================================ */
+
+/* image placeholder (replaces <image-slot> custom element) */
+.ms-img-slot{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;
+  background:#181818;
+  font-family:var(--font-mono);font-size:11px;
+  color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase;
+  text-align:center;padding:16px;line-height:1.5;
+}
+
+/* ---- Hero Portrait ---- */
+.ms-hero{
+  position:relative;
+  min-height:100vh;min-height:100svh;
+  padding-top:var(--header-h);
+  overflow:hidden;isolation:isolate;
+  background:#070707;
+  display:flex;align-items:stretch;
+}
+/* override landing-page hero-bg (z-index:-3 → 0, gradient → dark) */
+.ms-hero .hero-bg{z-index:0;background:#181818}
+.ms-hero .hero-bg::before{content:none}       /* remove scan-lines */
+.ms-hero .hero-bg::after{                      /* darkening overlay instead of spotlight */
+  z-index:2;mix-blend-mode:normal;
+  background:
+    linear-gradient(90deg,rgba(7,7,7,.2) 0%,rgba(7,7,7,.55) 40%,rgba(7,7,7,.92) 78%,#0c0c0c 100%),
+    linear-gradient(180deg,rgba(7,7,7,.6) 0%,rgba(7,7,7,.1) 25%,rgba(7,7,7,.8) 100%);
+}
+/* override grain (z-index:-2 → 3, no animation needed) */
+.ms-hero .hero-grain{z-index:3;animation:none;opacity:.35}
+/* override hero-inner (landing is 2-col grid; master is flex align-items:flex-end) */
+.ms-hero .hero-inner{
+  position:relative;z-index:4;width:100%;
+  min-height:unset;display:flex;align-items:flex-end;
+  padding:0 0 clamp(48px,6vw,80px);
+  grid-template-columns:unset;
+}
+.ms-hero-content{
+  width:100%;
+  display:grid;grid-template-columns:1fr minmax(360px,540px);
+  gap:48px;align-items:end;
+}
+/* larger display title for portrait hero */
+.ms-hero h1.hero-title{font-size:clamp(56px,8vw,140px);line-height:.88;margin-bottom:0}
+.ms-hero h1.hero-title .thin{font-size:.4em;letter-spacing:.005em;margin-bottom:.2em}
+
+/* personal stamp (rotated watermark) */
+.personal-stamp{
+  position:absolute;
+  bottom:clamp(20px,3vw,40px);right:clamp(20px,3vw,40px);
+  z-index:5;pointer-events:none;
+  font-family:var(--font-display);font-weight:900;
+  font-size:clamp(32px,4vw,56px);
+  line-height:.85;letter-spacing:.01em;
+  color:transparent;-webkit-text-stroke:1.6px var(--accent);
+  text-transform:uppercase;transform:rotate(-4deg);text-align:right;
+  text-shadow:0 0 24px rgba(255,87,34,.18);
+  mix-blend-mode:screen;
+}
+.personal-stamp small{
+  display:flex;align-items:center;gap:8px;justify-content:flex-end;
+  margin-top:6px;-webkit-text-stroke:0;color:var(--accent);
+  font-family:var(--font-mono);font-weight:500;font-size:10px;
+  letter-spacing:.32em;opacity:.85;
+}
+.personal-stamp small::before{content:"";width:14px;height:1px;background:var(--accent)}
+
+/* identity panel (master card — right column of hero) */
+.id-panel{
+  background:rgba(12,12,12,.65);backdrop-filter:blur(10px);
+  border:1px solid var(--line);padding:28px 28px 26px;
+  display:flex;flex-direction:column;gap:14px;position:relative;
+}
+.id-panel::before,.id-panel::after{
+  content:"";position:absolute;width:14px;height:14px;border:1px solid var(--accent);
+}
+.id-panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.id-panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.id-panel .who{display:flex;align-items:baseline;gap:14px;border-bottom:1px dashed var(--line);padding-bottom:14px}
+.id-panel .who .name{font-family:var(--font-display);font-weight:800;font-size:32px;line-height:1;color:var(--ink-0);letter-spacing:.005em;text-transform:uppercase}
+.id-panel .who .role{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+.id-panel .specs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.id-panel .specs > div{display:flex;flex-direction:column;gap:2px}
+.id-panel .specs .k{font-family:var(--font-mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3)}
+.id-panel .specs .v{font-family:var(--font-text);font-weight:600;font-size:15px;color:var(--ink-0);letter-spacing:.005em}
+.id-panel .specs .v.mono{font-family:var(--font-mono);font-weight:500}
+.id-panel .specs .v.accent{color:var(--accent)}
+.id-panel .sig{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);display:flex;align-items:center;gap:12px}
+.id-panel .sig .stamp{
+  width:38px;height:38px;flex:0 0 auto;
+  background:var(--accent);color:#0a0a0a;display:grid;place-items:center;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+  font-family:var(--font-display);font-weight:900;font-size:18px;line-height:1;
+}
+.id-panel .sig .text{display:flex;flex-direction:column;font-family:var(--font-mono);font-size:11px;color:var(--ink-2);letter-spacing:.04em;line-height:1.4}
+.id-panel .sig .text strong{color:var(--ink-0);font-weight:600;font-family:var(--font-text)}
+
+/* ---- Stats strip ---- */
+.ms-stats{
+  padding:clamp(48px,6vw,80px) 0;
+  background:#0a0a0a;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.ms-stats-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:1px;background:var(--line);
+}
+.ms-stats-grid > div{background:#0a0a0a;padding:28px 24px;display:flex;flex-direction:column;gap:6px}
+.ms-stats-grid .sv{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(40px,4.4vw,64px);line-height:.95;
+  color:var(--ink-0);letter-spacing:-.005em;
+}
+.ms-stats-grid .sv small{font-family:var(--font-mono);font-weight:500;font-size:.32em;color:var(--accent);margin-left:6px;letter-spacing:.06em}
+.ms-stats-grid .sl{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-top:10px}
+
+/* ---- Manifesto (grid layout, scoped to avoid .manifesto text-only definition above) ---- */
+.ms-manifesto{
+  display:grid;grid-template-columns:minmax(280px,460px) 1fr;
+  gap:clamp(40px,5vw,72px);align-items:start;
+}
+.manifesto-photo{
+  aspect-ratio:4/5;background:#111;border:1px solid var(--line);
+  overflow:hidden;position:sticky;top:calc(var(--header-h) + 24px);
+}
+.manifesto-text{display:flex;flex-direction:column;gap:32px}
+.quote-mark{
+  font-family:var(--font-display);font-weight:900;font-size:140px;line-height:.7;
+  color:var(--accent);text-shadow:0 0 32px rgba(255,87,34,.25);
+  margin-bottom:-40px;margin-left:-8px;
+}
+.ms-manifesto h2{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3.2vw,44px);line-height:1.05;color:var(--ink-0);text-transform:uppercase;letter-spacing:-.005em;text-wrap:balance}
+.ms-manifesto h2 .accent{color:var(--accent)}
+.ms-manifesto .manifesto-text p{font-size:clamp(15px,1.15vw,17px);line-height:1.7;color:var(--ink-1);max-width:54ch}
+.ms-manifesto .manifesto-text p strong{color:var(--ink-0);font-weight:600}
+.ms-manifesto .manifesto-text p em{color:var(--accent);font-style:normal;font-weight:500}
+.manifesto-divider{height:1px;background:linear-gradient(90deg,var(--line) 0,transparent 100%);margin:8px 0}
+.principles{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:20px}
+.principles li{display:grid;grid-template-columns:48px 1fr;gap:18px;padding:18px 0;border-bottom:1px dashed var(--line)}
+.principles li:last-child{border-bottom:0}
+.principles .n{font-family:var(--font-display);font-weight:900;font-size:38px;line-height:.85;color:transparent;-webkit-text-stroke:1.4px var(--accent)}
+.principles h3{font-family:var(--font-text);font-weight:700;font-size:17px;color:var(--ink-0);letter-spacing:.005em;margin-bottom:6px;text-transform:uppercase}
+.principles p{font-size:14px;line-height:1.55;color:var(--ink-2);max-width:48ch;margin:0}
+
+/* ---- Journey / career timeline ---- */
+.journey{position:relative;padding-left:64px;margin-left:8px}
+.journey::before{content:"";position:absolute;left:16px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.j-item{position:relative;padding-bottom:48px;display:grid;grid-template-columns:160px 1fr;gap:32px;align-items:start}
+.j-item:last-child{padding-bottom:0}
+.j-item::before{content:"";position:absolute;left:-56px;top:6px;width:18px;height:18px;border:2px solid var(--accent);background:#0a0a0a;border-radius:50%;z-index:2}
+.j-item::after{content:"";position:absolute;left:-49px;top:13px;width:4px;height:4px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px rgba(255,87,34,.6)}
+.j-year{font-family:var(--font-display);font-weight:900;font-size:48px;line-height:.85;color:transparent;-webkit-text-stroke:1.4px var(--accent);margin-top:-6px}
+.j-year small{display:block;-webkit-text-stroke:0;color:var(--ink-3);font-family:var(--font-mono);font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;margin-top:10px}
+.j-body h3{font-family:var(--font-text);font-weight:700;font-size:clamp(18px,2vw,24px);color:var(--ink-0);line-height:1.2;letter-spacing:.005em;margin-bottom:8px}
+.j-body p{font-size:15px;line-height:1.6;color:var(--ink-2);max-width:56ch}
+.j-body p strong{color:var(--ink-0);font-weight:600}
+.j-body p em{color:var(--accent);font-style:normal}
+.j-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.j-tags span{padding:4px 10px;background:#161616;border:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+
+/* ---- Myhands — what I do personally vs delegate ---- */
+.myhands{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.myhands > div{background:#0e0e0e;padding:36px 36px 32px}
+.myhands--self{background:#121110}
+.myhands h3{display:flex;align-items:center;gap:12px;font-family:var(--font-text);font-weight:700;font-size:16px;color:var(--ink-0);letter-spacing:.02em;text-transform:uppercase;margin-bottom:24px}
+.myhands h3 .mark{width:28px;height:28px;display:grid;place-items:center;font-family:var(--font-display);font-weight:900;font-size:18px;line-height:1}
+.myhands--self h3{color:var(--accent)}
+.myhands--self h3 .mark{background:var(--accent);color:#0a0a0a}
+.myhands--team h3 .mark{border:1px solid var(--ink-3);color:var(--ink-2)}
+.myhands ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:14px}
+.myhands li{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:flex-start;border-bottom:1px dashed #1d1d1d;padding-bottom:14px}
+.myhands li:last-child{border-bottom:0;padding-bottom:0}
+.myhands li .ico{width:32px;height:32px;flex:0 0 auto;display:grid;place-items:center;color:var(--ink-2);border:1px solid var(--line)}
+.myhands--self li .ico{color:var(--accent);border-color:rgba(255,87,34,.4);background:rgba(255,87,34,.06)}
+.myhands li .ico svg{width:16px;height:16px}
+.myhands li .body h4{font-family:var(--font-text);font-weight:600;font-size:14.5px;color:var(--ink-0);letter-spacing:.005em;margin-bottom:3px}
+.myhands li .body p{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;line-height:1.5;color:var(--ink-3)}
+
+/* ---- Tools — equipment showcase ---- */
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.tool{background:#0e0e0e;border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;transition:border-color .25s ease,transform .25s ease}
+.tool:hover{border-color:rgba(255,87,34,.4);transform:translateY(-3px)}
+.tool-media{aspect-ratio:5/4;background:#181818;border-bottom:1px solid var(--line);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.tool-media .badge{position:absolute;top:12px;left:12px;z-index:1;padding:4px 8px;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);border:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+.tool-body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:10px}
+.tool-body .brand{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.tool-body h3{font-family:var(--font-text);font-weight:700;font-size:16px;color:var(--ink-0);letter-spacing:.005em;line-height:1.25}
+.tool-body p{font-size:13px;line-height:1.55;color:var(--ink-2)}
+.tool-spec{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:12px;border-top:1px dashed var(--line);font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--ink-3)}
+.tool-spec strong{color:var(--ink-0);font-weight:500}
+
+/* ---- Quotes wall ---- */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.quote{background:#0e0e0e;padding:32px 28px 30px;display:flex;flex-direction:column;gap:14px;position:relative}
+.quote::before{content:"„";position:absolute;top:14px;right:18px;font-family:var(--font-display);font-weight:900;font-size:80px;line-height:.5;color:var(--accent);opacity:.4}
+.quote p{font-size:16px;line-height:1.5;color:var(--ink-0);font-weight:500;letter-spacing:.005em;z-index:1;position:relative;text-wrap:balance}
+.quote p em{color:var(--accent);font-style:normal}
+.quote .ctx{margin-top:auto;padding-top:14px;border-top:1px dashed var(--line);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+
+/* ---- Signature CTA ---- */
+.signature{padding:clamp(64px,8vw,100px) 0;background:#0a0a0a;border-top:1px solid var(--line);position:relative;overflow:hidden}
+.signature::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 50% 60% at 50% 50%,rgba(255,87,34,.06),transparent 70%)}
+.signature .container{position:relative;z-index:1}
+.sig-grid{display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:center}
+.sig-portrait{width:200px;height:200px;border-radius:50%;background:#111;border:1px solid var(--line);overflow:hidden;flex:0 0 auto;position:relative;display:flex;align-items:center;justify-content:center}
+.sig-portrait::after{content:"";position:absolute;inset:-4px;border:1px dashed rgba(255,87,34,.3);border-radius:50%;pointer-events:none}
+.sig-body{display:flex;flex-direction:column;gap:18px}
+.sig-body .k{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+.sig-body h2{font-family:var(--font-display);font-weight:800;font-size:clamp(36px,4.6vw,68px);line-height:.95;letter-spacing:-.005em;text-transform:uppercase;color:var(--ink-0);text-wrap:balance}
+.sig-body h2 .accent{color:var(--accent)}
+.sig-body p{font-size:15.5px;line-height:1.6;color:var(--ink-2);max-width:54ch}
+.sig-buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+
+/* ---- Master page responsive ---- */
+@media (max-width:1100px){
+  .ms-hero-content{grid-template-columns:1fr;gap:32px}
+  .ms-manifesto{grid-template-columns:1fr;gap:32px}
+  .manifesto-photo{position:static;aspect-ratio:4/3;max-width:520px}
+  .ms-stats-grid{grid-template-columns:repeat(3,1fr)}
+  .tools-grid{grid-template-columns:1fr 1fr}
+  .quotes{grid-template-columns:1fr 1fr}
+  .myhands{grid-template-columns:1fr}
+  .j-item{grid-template-columns:120px 1fr;gap:20px}
+  .j-year{font-size:38px}
+}
+@media (max-width:980px){
+  .sig-grid{grid-template-columns:1fr;gap:28px}
+  .sig-portrait{width:140px;height:140px}
+  .ms-stats-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){
+  .ms-stats-grid{grid-template-columns:1fr}
+  .tools-grid{grid-template-columns:1fr}
+  .quotes{grid-template-columns:1fr}
+  .j-item{grid-template-columns:1fr;gap:8px}
+  .j-year{font-size:42px}
+}
