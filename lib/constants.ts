@@ -7,6 +7,14 @@ export const CONTACTS = {
   instagram:
     "https://www.instagram.com/nice.car.if?igsh=MTI3Y2x2OWd1ODU0dw==",
   googleMaps: "https://maps.app.goo.gl/8yUeMbnw5k14jL7w9",
+  address: "вул. Максимовича, 15, Івано-Франківськ, 76000",
+  addressHint:
+    "Навпроти заправки ОККО — наліво, перший поворот з об'їзної.",
+  hours: {
+    weekdays: "09:00 — 18:00",
+    saturday: "09:00 — 14:00",
+    sunday: "Вихідний",
+  },
 };
 
 export const IDLE_THRESHOLD_DAYS = 3;

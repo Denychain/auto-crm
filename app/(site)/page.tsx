@@ -108,7 +108,7 @@ export default function LandingPage() {
         <a href="#about-master" onClick={() => setMenuOpen(false)}><span>Про майстра</span><span className="num">04 / 05</span></a>
         <a href="#contacts" onClick={() => setMenuOpen(false)}><span>Контакти</span><span className="num">05 / 05</span></a>
         <a href="tel:+380992334420" className="m-phone" onClick={() => setMenuOpen(false)}>
-          <small>Подзвонити майстру</small>
+          <small>Подзвонити Майстру Дмитру</small>
           +380 99 233 44 20
         </a>
       </div>
@@ -173,17 +173,11 @@ export default function LandingPage() {
                 </a>
               </div>
 
-              <div className="trust">
-                <span>25 років у ремеслі</span>
-                <span>Гарантія на роботу</span>
-                <span>Підбір фарби 1:1</span>
-              </div>
             </div>
 
             {/* RIGHT: technical sidebar */}
             <aside className="hero-meta" aria-label="Коротко про сервіс">
               <div className="tech-card">
-                <div className="label">// Slogan</div>
                 <div className="slogan">Make it <span className="accent">NICE.</span></div>
                 <p className="copy">
                   Якість, яка варта очікування. Краще потримаємо машину зайвий день на сушці, ніж віддамо халтуру.
@@ -205,13 +199,6 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="file-strip">
-                <span>FILE</span>
-                <span>·</span>
-                <span>hero_v01.section</span>
-                <span className="dotline"></span>
-                <span>UA</span>
-              </div>
             </aside>
 
           </div>
@@ -280,7 +267,6 @@ export default function LandingPage() {
                   <span>Дивитися приклади робіт</span>
                   <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="square"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
-                <span className="note">// Портфоліо робіт в цеху</span>
               </div>
             </div>
 
@@ -312,10 +298,6 @@ export default function LandingPage() {
 
             {/* Card 01 — Painting */}
             <article className="svc-card">
-              <div className="svc-meta">
-                <span>01 / 04</span>
-                <span>Painting</span>
-              </div>
               <div className="svc-icon" aria-hidden={true}>
                 <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="square" strokeLinejoin="miter">
                   <path d="M24 6 C24 6 14 19 14 28 a10 10 0 0 0 20 0 C34 19 24 6 24 6 Z"/>
@@ -324,7 +306,6 @@ export default function LandingPage() {
               </div>
               <h3>Фарбування<br />в камері</h3>
               <ul className="svc-list">
-                <li>Локальне фарбування (плямою / переходом)</li>
                 <li>Повне фарбування авто</li>
                 <li>Фарбування окремих елементів — бампер, капот, двері</li>
               </ul>
@@ -336,10 +317,6 @@ export default function LandingPage() {
 
             {/* Card 02 — Bodywork */}
             <article className="svc-card">
-              <div className="svc-meta">
-                <span>02 / 04</span>
-                <span>Bodywork</span>
-              </div>
               <div className="svc-icon" aria-hidden={true}>
                 <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="square" strokeLinejoin="miter">
                   <rect x="7" y="8" width="22" height="10"/>
@@ -358,10 +335,6 @@ export default function LandingPage() {
 
             {/* Card 03 — Parts (TOP) */}
             <article className="svc-card svc-card--top">
-              <div className="svc-meta">
-                <span>03 / 04</span>
-                <span className="svc-badge">ТОП</span>
-              </div>
               <div className="svc-icon" aria-hidden={true}>
                 <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="square" strokeLinejoin="miter">
                   <path d="M24 6 L42 14 L42 34 L24 42 L6 34 L6 14 Z"/>
@@ -384,10 +357,6 @@ export default function LandingPage() {
 
             {/* Card 04 — Detailing */}
             <article className="svc-card">
-              <div className="svc-meta">
-                <span>04 / 04</span>
-                <span>Finish</span>
-              </div>
               <div className="svc-icon" aria-hidden={true}>
                 <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="square" strokeLinejoin="miter">
                   <path d="M24 6 L40 20 L24 42 L8 20 Z"/>
@@ -406,7 +375,6 @@ export default function LandingPage() {
 
           {/* Secondary services strip */}
           <div className="svc-extra">
-            <span className="tag">// Також</span>
             <div className="items">
               <span>Заміна мастил</span>
               <span>Фільтри</span>
@@ -417,7 +385,6 @@ export default function LandingPage() {
           {/* Bottom CTA */}
           <div className="svc-cta">
             <div className="svc-cta-text">
-              <span className="k">// Не впевнені, що саме вам потрібно?</span>
               <h4>Розкажіть про проблему — підкажемо, що робити.</h4>
             </div>
             <a href="tel:+380992334420" className="btn btn--primary">
@@ -465,60 +432,48 @@ export default function LandingPage() {
             <li className="step">
               <div className="step-head">
                 <span className="step-num">01</span>
-                <span className="step-tag">Step / 06</span>
               </div>
               <div className="step-title">Оцінка та бюджет</div>
-              <div className="step-gist">// Не їдьте дарма</div>
               <p className="step-body">Надішліть фото пошкоджень у <em>Viber</em> або <em>Telegram</em>. Назвемо орієнтовну вилку цін. Якщо порядок цифр підходить — домовляємось про огляд.</p>
             </li>
 
             <li className="step">
               <div className="step-head">
                 <span className="step-num">02</span>
-                <span className="step-tag">Step / 06</span>
               </div>
               <div className="step-title">Запис у чергу</div>
-              <div className="step-gist">// Ми затребувані</div>
               <p className="step-body">Узгоджуємо дату. Ви потрапляєте в графік. Ніяких «живих черг» і спонтанних візитів — це поважає і ваш, і наш час.</p>
             </li>
 
             <li className="step step--critical">
               <div className="step-head">
                 <span className="step-num">03</span>
-                <span className="step-tag">Critical · 24h</span>
               </div>
               <div className="step-title">Дзвінок «за 24 години»</div>
-              <div className="step-gist">// Контроль в&apos;їзду</div>
               <p className="step-body"><em>Не приганяйте авто навмання.</em> Ми самі зателефонуємо за день до початку робіт, коли місце звільниться. Тільки після цього дзвінка — ви їдете до нас.</p>
             </li>
 
             <li className="step">
               <div className="step-head">
                 <span className="step-num">04</span>
-                <span className="step-tag">Step / 06</span>
               </div>
               <div className="step-title">Завдаток і старт</div>
-              <div className="step-gist">// Фінансова гарантія</div>
               <p className="step-body">При передачі ключів — завдаток на матеріали та запчастини. Робота починається тільки після передоплати: ваша гарантія серйозності, наша — закупівля якісних компонентів.</p>
             </li>
 
             <li className="step">
               <div className="step-head">
                 <span className="step-num">05</span>
-                <span className="step-tag">Step / 06</span>
               </div>
               <div className="step-title">Технологічний процес</div>
-              <div className="step-gist">// Не підганяйте нас</div>
               <p className="step-body">Дотримуємось часу висихання шпаклівки, ґрунту та лаку. Якщо технологія вимагає 12 годин сушки — ми чекаємо 12 годин. <em>Якість не терпить поспіху.</em></p>
             </li>
 
             <li className="step">
               <div className="step-head">
                 <span className="step-num">06</span>
-                <span className="step-tag">Step / 06</span>
               </div>
               <div className="step-title">Видача та зберігання</div>
-              <div className="step-gist">// Забирайте вчасно</div>
               <p className="step-body">Повідомляємо про готовність. <em>3 дні</em> на безкоштовне зберігання. Далі — плата за стоянку: нам потрібне місце для наступного клієнта.</p>
             </li>
 
@@ -549,7 +504,6 @@ export default function LandingPage() {
               </div>
               <h2 className="pr-title">
                 Базові ціни на <span className="accent">фарбування</span>
-                <span className="sub">// Start price · $ USD</span>
               </h2>
             </div>
             <p className="pr-includes">
@@ -563,51 +517,43 @@ export default function LandingPage() {
             {/* Exterior */}
             <section className="pr-section">
               <header className="pr-section-head">
-                <span className="code">// EX</span>
                 <span className="name">Зовнішні елементи</span>
                 <span className="bar"></span>
                 <span className="meta">07 позицій</span>
               </header>
 
               <div className="price-row">
-                <span className="code">EX.01</span>
-                <span className="name">Капот <small>(зовні)</small></span>
+<span className="name">Капот <small>(зовні)</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">260</span><span className="sep">—</span><span className="v">500</span><span className="unit">USD</span></span>
               </div>
               <div className="price-row">
-                <span className="code">EX.02</span>
-                <span className="name">Бампер <small>(передній / задній)</small></span>
+<span className="name">Бампер <small>(передній / задній)</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">180</span><span className="sep">—</span><span className="v">250</span><span className="unit">USD</span></span>
               </div>
               <div className="price-row">
-                <span className="code">EX.03</span>
-                <span className="name">Двері</span>
+<span className="name">Двері</span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">160</span><span className="sep">—</span><span className="v">200</span><span className="unit">USD</span></span>
               </div>
               <div className="price-row">
-                <span className="code">EX.04</span>
-                <span className="name">Крило <small>переднє</small></span>
+<span className="name">Крило <small>переднє</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">160</span><span className="sep">—</span><span className="v">180</span><span className="unit">USD</span></span>
               </div>
               <div className="price-row">
-                <span className="code">EX.05</span>
-                <span className="name">Крило <small>заднє</small></span>
+<span className="name">Крило <small>заднє</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">170</span><span className="sep">—</span><span className="v">200</span><span className="unit">USD</span></span>
               </div>
               <div className="price-row">
-                <span className="code">EX.06</span>
-                <span className="name">Кришка багажника</span>
+<span className="name">Кришка багажника</span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">160</span><span className="sep">—</span><span className="v">220</span><span className="unit">USD</span></span>
               </div>
               <div className="price-row">
-                <span className="code">EX.07</span>
-                <span className="name">Пороги <small>(накладки / метал)</small></span>
+<span className="name">Пороги <small>(накладки / метал)</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">150</span><span className="sep">—</span><span className="v">170</span><span className="unit">USD</span></span>
               </div>
@@ -616,33 +562,28 @@ export default function LandingPage() {
             {/* Details */}
             <section className="pr-section">
               <header className="pr-section-head">
-                <span className="code">// DT</span>
                 <span className="name">Додаткові елементи</span>
                 <span className="bar"></span>
                 <span className="meta">04 позиції</span>
               </header>
 
               <div className="price-row">
-                <span className="code">DT.01</span>
-                <span className="name">Капот <small>(внутрянка)</small></span>
+<span className="name">Капот <small>(внутрянка)</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">100</span><span className="sep">—</span><span className="v">150</span><span className="unit">USD</span></span>
               </div>
               <div className="price-row">
-                <span className="code">DT.02</span>
-                <span className="name">Внутрішні отвори <small>(проєми)</small></span>
+<span className="name">Внутрішні отвори <small>(проєми)</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">60</span><span className="sep">—</span><span className="v">120</span><span className="unit">USD / шт</span></span>
               </div>
               <div className="price-row">
-                <span className="code">DT.03</span>
-                <span className="name">Фари <small>(лак / полірування)</small></span>
+<span className="name">Фари <small>(лак / полірування)</small></span>
                 <span className="dots"></span>
                 <span className="price"><span className="v">60</span><span className="sep">—</span><span className="v">80</span><span className="unit">USD / пара</span></span>
               </div>
               <div className="price-row">
-                <span className="code">DT.04</span>
-                <span className="name">Дзеркала / решітки</span>
+<span className="name">Дзеркала / решітки</span>
                 <span className="dots"></span>
                 <span className="price is-individual">Індивідуально</span>
               </div>
@@ -651,7 +592,6 @@ export default function LandingPage() {
             {/* Service */}
             <section className="pr-section pr-section--service">
               <header className="pr-section-head">
-                <span className="code">// SV</span>
                 <span className="name">Слюсарні роботи</span>
                 <span className="bar"></span>
                 <span className="meta">Бонус-цех</span>
@@ -697,7 +637,6 @@ export default function LandingPage() {
           {/* Bottom CTA */}
           <div className="pr-cta">
             <div className="lhs">
-              <span className="k">// Хочете точну цифру?</span>
               <h4>Надішліть фото пошкодження — порахуємо за пару годин.</h4>
             </div>
             <div className="rhs">
@@ -741,7 +680,6 @@ export default function LandingPage() {
             <aside className="cross" aria-label="Розріз шарів покриття">
               <div className="cross-frame">
                 <div className="cross-head">
-                  <span className="k">// X-section</span>
                   <span className="t">Шари покриття</span>
                   <span className="bar"></span>
                 </div>
@@ -750,55 +688,40 @@ export default function LandingPage() {
                   <li className="layer l-clear">
                     <span className="swatch" aria-hidden={true}></span>
                     <div className="info">
-                      <div className="row1">
-                        <span className="code">L 05</span>
-                        <span className="name">Лак</span>
-                      </div>
-                      <span className="desc">Clearcoat · захист від УФ</span>
+                      <span className="name">Лак</span>
+                      <span className="desc">захист від УФ</span>
                     </div>
                     <span className="thick">50–80<small>мкм</small></span>
                   </li>
                   <li className="layer l-base">
                     <span className="swatch" aria-hidden={true}></span>
                     <div className="info">
-                      <div className="row1">
-                        <span className="code">L 04</span>
-                        <span className="name">База / Колір</span>
-                      </div>
-                      <span className="desc">Base · пігмент + металік</span>
+                      <span className="name">База / Колір</span>
+                      <span className="desc">пігмент + металік</span>
                     </div>
                     <span className="thick">15–25<small>мкм</small></span>
                   </li>
                   <li className="layer l-primer">
                     <span className="swatch" aria-hidden={true}></span>
                     <div className="info">
-                      <div className="row1">
-                        <span className="code">L 03</span>
-                        <span className="name">Ґрунт</span>
-                      </div>
-                      <span className="desc">Primer · адгезія + антикор</span>
+                      <span className="name">Ґрунт</span>
+                      <span className="desc">адгезія + антикор</span>
                     </div>
                     <span className="thick">40–60<small>мкм</small></span>
                   </li>
                   <li className="layer l-filler">
                     <span className="swatch" aria-hidden={true}></span>
                     <div className="info">
-                      <div className="row1">
-                        <span className="code">L 02</span>
-                        <span className="name">Шпаклівка</span>
-                      </div>
-                      <span className="desc">Filler · геометрія поверхні</span>
+                      <span className="name">Шпаклівка</span>
+                      <span className="desc">геометрія поверхні</span>
                     </div>
                     <span className="thick">≤ 2<small>мм</small></span>
                   </li>
                   <li className="layer l-metal">
                     <span className="swatch" aria-hidden={true}></span>
                     <div className="info">
-                      <div className="row1">
-                        <span className="code">L 01</span>
-                        <span className="name">Метал</span>
-                      </div>
-                      <span className="desc">Substrate · сталь / алюміній</span>
+                      <span className="name">Метал</span>
+                      <span className="desc">сталь / алюміній</span>
                     </div>
                     <span className="thick">—</span>
                   </li>
@@ -816,7 +739,6 @@ export default function LandingPage() {
 
               {/* A. Drying */}
               <article className="tech-block">
-                <div className="kicker"><span className="letter">A</span> Процес висихання · Drying</div>
                 <h3>Чому ми чекаємо?</h3>
                 <p>Ми не віддаємо «сирі» авто. Шпаклівка та ґрунт мають пройти процес <em>усадки</em> (сісти), а розчинник — повністю випаруватися.</p>
                 <p>Якщо пофарбувати <em>мокрим по мокрому</em> заради швидкості — через місяць на сонці матеріали просядуть, і з&apos;являться «риски» або провали.</p>
@@ -825,7 +747,6 @@ export default function LandingPage() {
 
               {/* B. Color match */}
               <article className="tech-block">
-                <div className="kicker"><span className="letter">B</span> Колористика · Color match</div>
                 <h3>Чому код фарби з VIN не працює?</h3>
                 <p>Ми <em>ніколи не фарбуємо</em> по коду з VIN-номеру або лючка бензобака. Фарба на авто вигоряє на сонці і змінює відтінок з роками — заводський код брехне на 2–3 тони.</p>
                 <p>Ми знімаємо лючок бензобака, веземо його в <em>лабораторію</em>, і колорист підбирає рецепт під реальний стан вашого авто.</p>
@@ -833,7 +754,6 @@ export default function LandingPage() {
 
               {/* C. Complex colors (warn) */}
               <article className="tech-block warn">
-                <div className="kicker"><span className="letter">C</span> Увага · Складні кольори</div>
                 <h3>Pearl та Xirallic — ювелірна робота.</h3>
                 <p>Якщо у вас складний колір — тришаровий <em>перламутр</em> або <em>ксиралік</em> — підбір може зайняти від <em>1 до 3 тижнів</em>. Це не затримка, це робота колориста.</p>
                 <p className="conclusion">Краще почекати і отримати ідеальний колір, ніж їздити на <em>різнокольоровій</em> машині.</p>
@@ -848,8 +768,8 @@ export default function LandingPage() {
               Я особисто перевіряю, як ліг лак і чи співпадає колір під різними кутами світла. Поки результат не буде <em>«nice»</em> — машина з боксу не виїде.
             </blockquote>
             <figcaption className="who">
-              <span className="name">Власник цеху</span>
-              <span className="role">// Майстер · Колорист</span>
+              <span className="name">Майстер Дмитро</span>
+              <span className="role">Власник · Колорист</span>
               <span className="signed">Особиста відповідальність</span>
             </figcaption>
           </figure>
@@ -1054,7 +974,6 @@ export default function LandingPage() {
             <div className="rep-google">
               <div className="stars" aria-label="5 з 5">★ ★ ★ ★ ★</div>
               <div className="text">
-                <span className="k">// Прозоро · Незалежно</span>
                 <h4>Почитайте відгуки наших клієнтів на <em>Google Maps</em>.</h4>
               </div>
               <a href={CONTACTS.googleMaps} target="_blank" rel="noopener" className="btn btn--primary">
@@ -1068,7 +987,6 @@ export default function LandingPage() {
                 <QrCode value={CONTACTS.googleMaps} size={128} />
               </div>
               <div className="qr-info">
-                <span className="k">// Вже були у нас?</span>
                 <h4>Наведіть камеру, щоб залишити відгук</h4>
                 <span className="hint">Перейдете на Google Maps</span>
               </div>
@@ -1091,10 +1009,6 @@ export default function LandingPage() {
           <small>Authorized · Owner-checked</small>
         </span>
 
-        <div className="us-codes br" aria-hidden={true}>
-          <span>// MSCU 9876543 · 42G1</span>
-          <span className="live">Port · IF-UA · ETA 14d</span>
-        </div>
 
         <div className="us-inner">
           <div className="container">
@@ -1116,7 +1030,6 @@ export default function LandingPage() {
               </p>
 
               <div className="us-killer">
-                <div className="tag">// Killer feature</div>
                 <p>Боїтеся купити «кота в мішку»? <strong>Власник особисто оцінює пошкодження лоту на аукціоні до покупки.</strong> Прораховуємо вартість ремонту заздалегідь — бо ми майстри, а не менеджери з продажу.</p>
               </div>
 
@@ -1254,7 +1167,6 @@ export default function LandingPage() {
           </div>
 
           <div className="faq-foot">
-            <span className="k">// Не знайшли відповідь?</span>
             <p>Напишіть у <strong>Telegram</strong> або <strong>Viber</strong> — відповімо за пару годин у робочий час.</p>
           </div>
 
@@ -1296,7 +1208,6 @@ export default function LandingPage() {
             <div className="footer-col footer-contacts">
               <h5>Зв&apos;язок</h5>
               <div className="footer-phone">
-                <span className="k">// Подзвонити майстру</span>
                 <a href="tel:+380992334420">+380 99 233 44 20</a>
               </div>
 
@@ -1333,21 +1244,18 @@ export default function LandingPage() {
 
               <h5>Графік роботи</h5>
               <dl className="footer-hours">
-                <dt>Пн — Пт</dt><dd>09:00 — 18:00</dd>
-                <dt>Сб</dt><dd>09:00 — 14:00</dd>
-                <dt>Нд</dt><dd className="closed">Вихідний</dd>
+                <dt>Пн — Пт</dt><dd>{CONTACTS.hours.weekdays}</dd>
+                <dt>Сб</dt><dd>{CONTACTS.hours.saturday}</dd>
+                <dt>Нд</dt><dd className="closed">{CONTACTS.hours.sunday}</dd>
               </dl>
             </div>
 
             {/* COL 3 — Location */}
             <div className="footer-col footer-loc">
               <h5>Локація</h5>
-              <address>
-                м. Івано-Франківськ,<br />
-                <strong>вул. [Назва вулиці], 00</strong>
-              </address>
+              <address>{CONTACTS.address}</address>
               <p className="hint">
-                <em>Орієнтир:</em> заїзд з боку Епіцентру, сині ворота.
+                <em>Орієнтир:</em> {CONTACTS.addressHint}
               </p>
 
               {/* Map placeholder */}
