@@ -65,7 +65,7 @@ export default function LandingClient() {
       {/* HERO */}
       <section className="hero" id="hero">
         <div className="hero-bg" aria-hidden={true}>
-          <video className="hero-video" autoPlay muted loop playsInline preload="auto" poster="/assets/hero-poster.jpg">
+          <video className="hero-video" autoPlay muted loop playsInline preload="auto" poster="/assets/hero-poster.png">
             <source src="/assets/hero-loop.mp4" type="video/mp4" />
           </video>
         </div>
@@ -915,7 +915,7 @@ export default function LandingClient() {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={n}
-                src={`/assets/reviews/google-${n}.png`}
+                src={`/assets/reviews/google-${n}.jpg`}
                 alt={`Google відгук ${n}`}
                 loading="lazy"
                 style={{ width:"100%", borderRadius:8, border:"1px solid rgba(255,255,255,.08)", display:"block" }}
@@ -973,7 +973,7 @@ export default function LandingClient() {
       {/* 08 · АВТО З США */}
       <section className="us-cars" id="us-cars">
         <div className="us-bg" aria-hidden={true}>
-          <img src="/assets/us-bg.jpg" alt="Морський контейнер з авто з США в порту" />
+          <img src="/assets/us-bg.png" alt="Морський контейнер з авто з США в порту" />
         </div>
         <div className="us-grain" aria-hidden={true}></div>
 
