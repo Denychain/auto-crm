@@ -319,14 +319,19 @@ export default function GalleryClient() {
             ref={scannerRef}
             aria-label="Перетягніть лінію щоб порівняти до/після"
           >
-            <div className="layer before">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/gallery/featured/bmw-m3-before.jpg" alt="BMW M3 до фарбування · Copart NJ" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
-            </div>
-            <div className="layer after" ref={afterLayerRef}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/gallery/featured/bmw-m3-after.png" alt="BMW M3 після фарбування · NICE.car.if" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
-            </div>
+            <div
+              className="layer before"
+              style={{ backgroundImage:"url('/assets/gallery/featured/bmw-m3-before.jpg')", backgroundSize:"cover", backgroundPosition:"center" }}
+              role="img"
+              aria-label="BMW M3 до фарбування · Copart NJ"
+            />
+            <div
+              className="layer after"
+              ref={afterLayerRef}
+              style={{ backgroundImage:"url('/assets/gallery/featured/bmw-m3-after.png')", backgroundSize:"cover", backgroundPosition:"center" }}
+              role="img"
+              aria-label="BMW M3 після фарбування · NICE.car.if"
+            />
 
             <span className="label before">Before · Copart NJ</span>
             <span className="label after">After · NICE.car.if</span>
@@ -365,19 +370,11 @@ export default function GalleryClient() {
                 key={item.id}
                 className={`gi ${item.sz}${item.hero ? " with-corners" : ""}${isHidden(item.cat) ? " is-hidden" : ""}`}
                 data-cat={item.cat}
+                style={item.img ? { backgroundImage:`url('${item.img}')`, backgroundSize:"cover", backgroundPosition:"center" } : undefined}
               >
-                {item.img && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.img}
-                    alt={item.title}
-                    loading="lazy"
-                    style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", zIndex:0 }}
-                  />
-                )}
-                <span className="tag" style={{ position:"relative", zIndex:1 }}>{item.tag}</span>
-                <span className="gi-id" style={{ position:"relative", zIndex:1 }}>{item.num}</span>
-                <div className="info" style={{ position:"relative", zIndex:1 }}>
+                <span className="tag">{item.tag}</span>
+                <span className="gi-id">{item.num}</span>
+                <div className="info">
                   <h3>{item.title}</h3>
                   <span className="sub">
                     {item.hero
@@ -397,12 +394,11 @@ export default function GalleryClient() {
                   className={`gl-row${activeFilter !== "all" && activeFilter !== row.cat ? " is-hidden" : ""}`}
                   data-cat={row.cat}
                 >
-                  <div className="gl-thumb">
-                    {row.img
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={row.img} alt={row.title} loading="lazy" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
-                      : <span className="ph-thumb">{row.ph}</span>
-                    }
+                  <div
+                    className="gl-thumb"
+                    style={row.img ? { backgroundImage:`url('${row.img}')`, backgroundSize:"cover", backgroundPosition:"center" } : undefined}
+                  >
+                    {!row.img && <span className="ph-thumb">{row.ph}</span>}
                   </div>
                   <span className="gl-title">{row.title}</span>
                   <span className="gl-cat">{row.catLabel}</span>
@@ -456,13 +452,13 @@ export default function GalleryClient() {
                 </div>
                 <div className="tl-media">
                   {item.frames.map((f, j) => (
-                    <div key={j} className={f.cls}>
-                      <span className="frame-lbl" style={{ position:"relative", zIndex:1 }}>{f.lbl}</span>
-                      {f.img
-                        // eslint-disable-next-line @next/next/no-img-element
-                        ? <img src={f.img} alt={f.lbl} loading="lazy" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", zIndex:0 }} />
-                        : <span className="ph-tl">{f.ph}</span>
-                      }
+                    <div
+                      key={j}
+                      className={f.cls}
+                      style={f.img ? { backgroundImage:`url('${f.img}')`, backgroundSize:"cover", backgroundPosition:"center" } : undefined}
+                    >
+                      <span className="frame-lbl">{f.lbl}</span>
+                      {!f.img && <span className="ph-tl">{f.ph}</span>}
                     </div>
                   ))}
                 </div>
