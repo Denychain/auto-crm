@@ -65,7 +65,7 @@ export default function LandingClient() {
       {/* HERO */}
       <section className="hero" id="hero">
         <div className="hero-bg" aria-hidden={true}>
-          <video className="hero-video" autoPlay muted loop playsInline preload="auto">
+          <video className="hero-video" autoPlay muted loop playsInline preload="auto" poster="/assets/hero-poster.jpg">
             <source src="/assets/hero-loop.mp4" type="video/mp4" />
           </video>
         </div>
@@ -907,6 +907,20 @@ export default function LandingClient() {
               </div>
             </article>
 
+          </div>
+
+          {/* Real Google review screenshots */}
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:12, marginTop:32 }}>
+            {[1,2,3,4].map(n => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={n}
+                src={`/assets/reviews/google-${n}.png`}
+                alt={`Google відгук ${n}`}
+                loading="lazy"
+                style={{ width:"100%", borderRadius:8, border:"1px solid rgba(255,255,255,.08)", display:"block" }}
+              />
+            ))}
           </div>
 
           {/* Stats */}

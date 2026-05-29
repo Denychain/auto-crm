@@ -13,46 +13,47 @@ type SzClass = "sz-1" | "sz-2" | "sz-3" | "sz-4" | "sz-5" | "sz-6" | "sz-7";
 
 interface GalleryItem {
   id: string; num: string; sz: SzClass; cat: Exclude<Cat,"all">;
-  tag: string; title: string; sub: string; hero?: boolean; ph: string;
+  tag: string; title: string; sub: string; hero?: boolean; ph: string; img?: string;
 }
 
 interface ListRow {
-  id: string; cat: Exclude<Cat,"all">; title: string; catLabel: string; meta: string; num: string; ph: string;
+  id: string; cat: Exclude<Cat,"all">; title: string; catLabel: string; meta: string; num: string; ph: string; img?: string;
 }
 
 /* ── data ───────────────────────────────────────────── */
+const G = "/assets/gallery/grid/";
 const GRID_ITEMS: GalleryItem[] = [
-  { id:"g-01", num:"#01", sz:"sz-6", cat:"paint",  tag:"Painting",   hero:true, title:"Audi RS6 Avant · Frozen Grey",    sub:"Featured · Повне фарбування · 28 днів",  ph:"Audi RS6 · повне фарбування" },
-  { id:"g-02", num:"#02", sz:"sz-4", cat:"body",   tag:"Bodywork",             title:"Tesla Model S · стапель",          sub:"Рихтування · 14 днів",                   ph:"Tesla Model S · стапель" },
-  { id:"g-03", num:"#03", sz:"sz-1", cat:"polish", tag:"Detail",               title:"Глибоке полірування",              sub:"Mercedes E-Class",                       ph:"Mercedes · полірування макро" },
-  { id:"g-04", num:"#04", sz:"sz-1", cat:"polish", tag:"Detail",               title:"Фари · лакування",                 sub:"Honda CR-V",                             ph:"Honda · відновлення фар" },
-  { id:"g-05", num:"#05", sz:"sz-2", cat:"paint",  tag:"Painting",             title:"Mazda CX-5 · Soul Red Crystal",   sub:"Тришаровий перламутр · 18 днів",         ph:"Mazda CX-5 · Soul Red" },
-  { id:"g-06", num:"#06", sz:"sz-1", cat:"us",     tag:"US Import",            title:"Ford F-150 · з порту",            sub:"Lariat 2020 · TX salvage",               ph:"Ford F-150 · з США" },
-  { id:"g-07", num:"#07", sz:"sz-5", cat:"body",   tag:"Bodywork",             title:"VW Tiguan · пайка кріплень",      sub:"Бампер · відновлення",                   ph:"VW Tiguan · пайка" },
-  { id:"g-08", num:"#08", sz:"sz-4", cat:"paint",  tag:"Painting",             title:"Porsche 911 Carrera",             sub:"GT Silver · повне",                      ph:"Porsche 911 · камера" },
-  { id:"g-09", num:"#09", sz:"sz-1", cat:"paint",  tag:"Painting",             title:"Toyota Camry · бампер",           sub:"Локальне фарбування",                    ph:"Toyota Camry · бампер" },
-  { id:"g-10", num:"#10", sz:"sz-1", cat:"polish", tag:"Detail",               title:"Макро · крапля води",             sub:"After-detailing shot",                   ph:"Макро · деталь" },
-  { id:"g-11", num:"#11", sz:"sz-3", cat:"us",     tag:"US Import",            title:"Tesla Model Y · IAAI NY",         sub:"Lot → ключі · 47 днів",                  ph:"Tesla Model Y · IAAI" },
-  { id:"g-12", num:"#12", sz:"sz-4", cat:"body",   tag:"Bodywork",             title:"Зварювання лонжерону",            sub:"Subaru Outback · алюміній",              ph:"Зварювання · іскри" },
-  { id:"g-13", num:"#13", sz:"sz-2", cat:"paint",  tag:"Painting",             title:"Підбір кольору · лабораторія",   sub:"Xirallic · Mercedes",                    ph:"Лабораторія · підбір" },
-  { id:"g-14", num:"#14", sz:"sz-1", cat:"us",     tag:"US Import",            title:"Контейнер · Гданськ",             sub:"Розвантаження",                          ph:"Контейнер · порт" },
-  { id:"g-15", num:"#15", sz:"sz-1", cat:"paint",  tag:"Painting",             title:"Spray booth",                     sub:"Робочий процес",                         ph:"Кабіна · майстер" },
-  { id:"g-16", num:"#16", sz:"sz-5", cat:"polish", tag:"Detail",               title:"Range Rover · pre-sale",          sub:"Полірування + детейлінг",                ph:"Range Rover · детейлінг" },
-  { id:"g-17", num:"#17", sz:"sz-2", cat:"body",   tag:"Bodywork",             title:"Lexus RX 350",                    sub:"Рихтування + локальне",                  ph:"Lexus RX · рихтування" },
-  { id:"g-18", num:"#18", sz:"sz-4", cat:"paint",  tag:"Painting",             title:"Skoda Octavia · двері",           sub:"Race Blue Metallic",                     ph:"Skoda · Race Blue" },
+  { id:"g-01", num:"#01", sz:"sz-6", cat:"paint",  tag:"Painting",   hero:true, title:"Audi RS6 Avant · Frozen Grey",    sub:"Featured · Повне фарбування · 28 днів",  ph:"Audi RS6 · повне фарбування",  img:`${G}audi-rs6.jpg` },
+  { id:"g-02", num:"#02", sz:"sz-4", cat:"body",   tag:"Bodywork",             title:"Tesla Model S · стапель",          sub:"Рихтування · 14 днів",                   ph:"Tesla Model S · стапель",      img:`${G}tesla-s-stapel.jpg` },
+  { id:"g-03", num:"#03", sz:"sz-1", cat:"polish", tag:"Detail",               title:"Глибоке полірування",              sub:"Mercedes E-Class",                       ph:"Mercedes · полірування макро", img:`${G}mercedes-polish.jpg` },
+  { id:"g-04", num:"#04", sz:"sz-1", cat:"polish", tag:"Detail",               title:"Фари · лакування",                 sub:"Honda CR-V",                             ph:"Honda · відновлення фар",      img:`${G}honda-headlights.jpg` },
+  { id:"g-05", num:"#05", sz:"sz-2", cat:"paint",  tag:"Painting",             title:"Mazda CX-5 · Soul Red Crystal",   sub:"Тришаровий перламутр · 18 днів",         ph:"Mazda CX-5 · Soul Red",        img:`${G}mazda-soul-red.jpg` },
+  { id:"g-06", num:"#06", sz:"sz-1", cat:"us",     tag:"US Import",            title:"Ford F-150 · з порту",            sub:"Lariat 2020 · TX salvage",               ph:"Ford F-150 · з США",           img:`${G}ford-f150-usa.jpg` },
+  { id:"g-07", num:"#07", sz:"sz-5", cat:"body",   tag:"Bodywork",             title:"VW Tiguan · пайка кріплень",      sub:"Бампер · відновлення",                   ph:"VW Tiguan · пайка",            img:`${G}vw-tiguan-braze.jpg` },
+  { id:"g-08", num:"#08", sz:"sz-4", cat:"paint",  tag:"Painting",             title:"Porsche 911 Carrera",             sub:"GT Silver · повне",                      ph:"Porsche 911 · камера",         img:`${G}porsche-911.jpg` },
+  { id:"g-09", num:"#09", sz:"sz-1", cat:"paint",  tag:"Painting",             title:"Toyota Camry · бампер",           sub:"Локальне фарбування",                    ph:"Toyota Camry · бампер",        img:`${G}toyota-bumper.jpg` },
+  { id:"g-10", num:"#10", sz:"sz-1", cat:"polish", tag:"Detail",               title:"Макро · крапля води",             sub:"After-detailing shot",                   ph:"Макро · деталь",               img:`${G}macro-drop.jpg` },
+  { id:"g-11", num:"#11", sz:"sz-3", cat:"us",     tag:"US Import",            title:"Tesla Model Y · IAAI NY",         sub:"Lot → ключі · 47 днів",                  ph:"Tesla Model Y · IAAI",         img:`${G}tesla-y-iaai.jpg` },
+  { id:"g-12", num:"#12", sz:"sz-4", cat:"body",   tag:"Bodywork",             title:"Зварювання лонжерону",            sub:"Subaru Outback · алюміній",              ph:"Зварювання · іскри",           img:`${G}subaru-welding.jpg` },
+  { id:"g-13", num:"#13", sz:"sz-2", cat:"paint",  tag:"Painting",             title:"Підбір кольору · лабораторія",   sub:"Xirallic · Mercedes",                    ph:"Лабораторія · підбір",         img:`${G}color-lab.jpg` },
+  { id:"g-14", num:"#14", sz:"sz-1", cat:"us",     tag:"US Import",            title:"Контейнер · Гданськ",             sub:"Розвантаження",                          ph:"Контейнер · порт",             img:`${G}container-port.jpg` },
+  { id:"g-15", num:"#15", sz:"sz-1", cat:"paint",  tag:"Painting",             title:"Spray booth",                     sub:"Робочий процес",                         ph:"Кабіна · майстер",             img:`${G}spray-booth.jpg` },
+  { id:"g-16", num:"#16", sz:"sz-5", cat:"polish", tag:"Detail",               title:"Range Rover · pre-sale",          sub:"Полірування + детейлінг",                ph:"Range Rover · детейлінг",      img:`${G}range-rover.jpg` },
+  { id:"g-17", num:"#17", sz:"sz-2", cat:"body",   tag:"Bodywork",             title:"Lexus RX 350",                    sub:"Рихтування + локальне",                  ph:"Lexus RX · рихтування",        img:`${G}lexus-rx.jpg` },
+  { id:"g-18", num:"#18", sz:"sz-4", cat:"paint",  tag:"Painting",             title:"Skoda Octavia · двері",           sub:"Race Blue Metallic",                     ph:"Skoda · Race Blue",            img:`${G}skoda-octavia.jpg` },
 ];
 
 const LIST_ROWS: ListRow[] = [
-  { id:"gl-01", cat:"paint",  title:"Audi RS6 Avant · Frozen Grey",        catLabel:"Painting",   meta:"28 днів · повне",        num:"#01", ph:"RS6 thumb" },
-  { id:"gl-02", cat:"body",   title:"Tesla Model S · стапель",             catLabel:"Bodywork",   meta:"14 днів",                num:"#02", ph:"Tesla S thumb" },
-  { id:"gl-03", cat:"polish", title:"Mercedes E-Class · полірування",      catLabel:"Polish",     meta:"3 дні",                  num:"#03", ph:"Merc thumb" },
-  { id:"gl-05", cat:"paint",  title:"Mazda CX-5 · Soul Red Crystal",       catLabel:"Painting",   meta:"18 днів · перламутр",    num:"#05", ph:"Mazda thumb" },
-  { id:"gl-06", cat:"us",     title:"Ford F-150 Lariat · з США",           catLabel:"US Import",  meta:"9 днів · PDR",           num:"#06", ph:"F-150 thumb" },
-  { id:"gl-07", cat:"body",   title:"VW Tiguan · пайка кріплень",          catLabel:"Bodywork",   meta:"5 днів",                 num:"#07", ph:"Tiguan thumb" },
-  { id:"gl-08", cat:"paint",  title:"Porsche 911 · GT Silver",             catLabel:"Painting",   meta:"24 дні · повне",         num:"#08", ph:"Porsche thumb" },
-  { id:"gl-11", cat:"us",     title:"Tesla Model Y · IAAI NY",             catLabel:"US Import",  meta:"47 днів · all-in",       num:"#11", ph:"Tesla Y thumb" },
-  { id:"gl-13", cat:"paint",  title:"Підбір кольору · Mercedes Xirallic",  catLabel:"Painting",   meta:"21 день",                num:"#13", ph:"Merc lab thumb" },
-  { id:"gl-16", cat:"polish", title:"Range Rover · pre-sale",              catLabel:"Polish",     meta:"4 дні",                  num:"#16", ph:"RR thumb" },
+  { id:"gl-01", cat:"paint",  title:"Audi RS6 Avant · Frozen Grey",        catLabel:"Painting",   meta:"28 днів · повне",        num:"#01", ph:"RS6 thumb",       img:`${G}audi-rs6.jpg` },
+  { id:"gl-02", cat:"body",   title:"Tesla Model S · стапель",             catLabel:"Bodywork",   meta:"14 днів",                num:"#02", ph:"Tesla S thumb",   img:`${G}tesla-s-stapel.jpg` },
+  { id:"gl-03", cat:"polish", title:"Mercedes E-Class · полірування",      catLabel:"Polish",     meta:"3 дні",                  num:"#03", ph:"Merc thumb",      img:`${G}mercedes-polish.jpg` },
+  { id:"gl-05", cat:"paint",  title:"Mazda CX-5 · Soul Red Crystal",       catLabel:"Painting",   meta:"18 днів · перламутр",    num:"#05", ph:"Mazda thumb",     img:`${G}mazda-soul-red.jpg` },
+  { id:"gl-06", cat:"us",     title:"Ford F-150 Lariat · з США",           catLabel:"US Import",  meta:"9 днів · PDR",           num:"#06", ph:"F-150 thumb",     img:`${G}ford-f150-usa.jpg` },
+  { id:"gl-07", cat:"body",   title:"VW Tiguan · пайка кріплень",          catLabel:"Bodywork",   meta:"5 днів",                 num:"#07", ph:"Tiguan thumb",    img:`${G}vw-tiguan-braze.jpg` },
+  { id:"gl-08", cat:"paint",  title:"Porsche 911 · GT Silver",             catLabel:"Painting",   meta:"24 дні · повне",         num:"#08", ph:"Porsche thumb",   img:`${G}porsche-911.jpg` },
+  { id:"gl-11", cat:"us",     title:"Tesla Model Y · IAAI NY",             catLabel:"US Import",  meta:"47 днів · all-in",       num:"#11", ph:"Tesla Y thumb",   img:`${G}tesla-y-iaai.jpg` },
+  { id:"gl-13", cat:"paint",  title:"Підбір кольору · Mercedes Xirallic",  catLabel:"Painting",   meta:"21 день",                num:"#13", ph:"Merc lab thumb",  img:`${G}color-lab.jpg` },
+  { id:"gl-16", cat:"polish", title:"Range Rover · pre-sale",              catLabel:"Polish",     meta:"4 дні",                  num:"#16", ph:"RR thumb",        img:`${G}range-rover.jpg` },
 ];
 
 /* computed filter counts from real data */
@@ -64,6 +65,7 @@ const FILTERS: { key: Cat; label: string; count: number }[] = [
   { key:"us",     label:"Авто з США",  count: GRID_ITEMS.filter(i => i.cat === "us").length },
 ];
 
+const TL = "/assets/gallery/timeline/";
 const TL_ITEMS = [
   {
     date: "Жовтень · 2025",
@@ -74,9 +76,9 @@ const TL_ITEMS = [
     ),
     tags: ["Повне", "Xirallic-pearl", "28 днів"],
     frames: [
-      { cls:"frame span-2", lbl:"Booth · 19 day", ph:"RS6 у кабіні" },
-      { cls:"frame",        lbl:"Before",          ph:"RS6 · до" },
-      { cls:"frame",        lbl:"After",            ph:"RS6 · після" },
+      { cls:"frame span-2", lbl:"Booth · 19 day", ph:"RS6 у кабіні",  img:`${TL}rs6-booth.jpg` },
+      { cls:"frame",        lbl:"Before",          ph:"RS6 · до",       img:`${TL}rs6-before.jpg` },
+      { cls:"frame",        lbl:"After",            ph:"RS6 · після",   img:`${TL}rs6-after.jpg` },
     ],
   },
   {
@@ -88,9 +90,9 @@ const TL_ITEMS = [
     ),
     tags: ["US Import", "Side damage", "47 днів all-in"],
     frames: [
-      { cls:"frame",        lbl:"Lot · NY",    ph:"Tesla · аукціон" },
-      { cls:"frame",        lbl:"In repair",   ph:"Tesla · ремонт" },
-      { cls:"frame span-2", lbl:"Delivered",   ph:"Tesla · видача" },
+      { cls:"frame",        lbl:"Lot · NY",    ph:"Tesla · аукціон",  img:`${TL}tesla-lot.jpg` },
+      { cls:"frame",        lbl:"In repair",   ph:"Tesla · ремонт",   img:`${TL}tesla-repair.jpg` },
+      { cls:"frame span-2", lbl:"Delivered",   ph:"Tesla · видача",   img:`${TL}tesla-delivered.jpg` },
     ],
   },
   {
@@ -102,9 +104,9 @@ const TL_ITEMS = [
     ),
     tags: ["Стапель", "Капот + крила", "19 днів"],
     frames: [
-      { cls:"frame span-2", lbl:"Repair · 12 day", ph:"BMW 3 · стапель" },
-      { cls:"frame",        lbl:"Crash",            ph:"BMW 3 · ДТП" },
-      { cls:"frame",        lbl:"After",            ph:"BMW 3 · після" },
+      { cls:"frame span-2", lbl:"Repair · 12 day", ph:"BMW 3 · стапель", img:`${TL}bmw3-stapel.jpg` },
+      { cls:"frame",        lbl:"Crash",            ph:"BMW 3 · ДТП",     img:`${TL}bmw3-crash.jpg` },
+      { cls:"frame",        lbl:"After",            ph:"BMW 3 · після",   img:`${TL}bmw3-after.jpg` },
     ],
   },
 ];
@@ -318,10 +320,12 @@ export default function GalleryClient() {
             aria-label="Перетягніть лінію щоб порівняти до/після"
           >
             <div className="layer before">
-              <span className="ph-layer">BMW M3 · Before · Copart NJ</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/gallery/featured/bmw-m3-before.jpg" alt="BMW M3 до фарбування · Copart NJ" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
             </div>
             <div className="layer after" ref={afterLayerRef}>
-              <span className="ph-layer">BMW M3 · After · NICE.car.if</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/gallery/featured/bmw-m3-after.jpg" alt="BMW M3 після фарбування · NICE.car.if" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
             </div>
 
             <span className="label before">Before · Copart NJ</span>
@@ -362,10 +366,18 @@ export default function GalleryClient() {
                 className={`gi ${item.sz}${item.hero ? " with-corners" : ""}${isHidden(item.cat) ? " is-hidden" : ""}`}
                 data-cat={item.cat}
               >
-                <span className="tag">{item.tag}</span>
-                <span className="gi-id">{item.num}</span>
-                <span className="ph-gi">{item.ph}</span>
-                <div className="info">
+                {item.img && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.img}
+                    alt={item.title}
+                    loading="lazy"
+                    style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", zIndex:0 }}
+                  />
+                )}
+                <span className="tag" style={{ position:"relative", zIndex:1 }}>{item.tag}</span>
+                <span className="gi-id" style={{ position:"relative", zIndex:1 }}>{item.num}</span>
+                <div className="info" style={{ position:"relative", zIndex:1 }}>
                   <h3>{item.title}</h3>
                   <span className="sub">
                     {item.hero
@@ -386,7 +398,11 @@ export default function GalleryClient() {
                   data-cat={row.cat}
                 >
                   <div className="gl-thumb">
-                    <span className="ph-thumb">{row.ph}</span>
+                    {row.img
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={row.img} alt={row.title} loading="lazy" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                      : <span className="ph-thumb">{row.ph}</span>
+                    }
                   </div>
                   <span className="gl-title">{row.title}</span>
                   <span className="gl-cat">{row.catLabel}</span>
@@ -441,8 +457,12 @@ export default function GalleryClient() {
                 <div className="tl-media">
                   {item.frames.map((f, j) => (
                     <div key={j} className={f.cls}>
-                      <span className="frame-lbl">{f.lbl}</span>
-                      <span className="ph-tl">{f.ph}</span>
+                      <span className="frame-lbl" style={{ position:"relative", zIndex:1 }}>{f.lbl}</span>
+                      {f.img
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={f.img} alt={f.lbl} loading="lazy" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", zIndex:0 }} />
+                        : <span className="ph-tl">{f.ph}</span>
+                      }
                     </div>
                   ))}
                 </div>
