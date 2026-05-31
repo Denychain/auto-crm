@@ -98,55 +98,14 @@ const JOURNEY = [
   },
 ];
 
+const T = "/assets/master/tools/";
 const TOOLS = [
-  {
-    n: "01",
-    brand: "SATA · DE",
-    name: "SATAjet X 5500 PHASER",
-    desc: "Робочий пістолет для перлинових і ксиралік-кольорів. Точне розпилення без муарного ефекту.",
-    spec: <>Дюза <strong>1.3 RP</strong> · робочий тиск <strong>2.0 бар</strong></>,
-    ph: "Фарбопульт SATA",
-  },
-  {
-    n: "02",
-    brand: "USI Italia",
-    name: "Spray booth Chronotech 6m",
-    desc: "Двокамерна установка з контролем температури та вологості. Ідеально для довгих циклів сушки лаку.",
-    spec: <>До <strong>+70 °C</strong> · фільтрація 99.9%</>,
-    ph: "Кабіна фарбування",
-  },
-  {
-    n: "03",
-    brand: "Car-O-Liner · SE",
-    name: "Стапель з лазерним вимірюванням",
-    desc: "Витягуємо геометрію кузова з точністю до десятих міліметра. Працюємо з алюмінієм і високоміцними сталями.",
-    spec: <>Точність <strong>±0.2 мм</strong> · до 6 точок</>,
-    ph: "Стапель з лазерним контролем",
-  },
-  {
-    n: "04",
-    brand: "X-Rite · US",
-    name: "Спектрофотометр MA-T6+",
-    desc: "Сканує колір з 6 кутів. Точний підбір рецепту на старому, вигорілому ЛКП. Жодних здогадок.",
-    spec: <>6 кутів · бібліотека <strong>250k+ кольорів</strong></>,
-    ph: "Спектрофотометр X-Rite",
-  },
-  {
-    n: "05",
-    brand: "Fronius · AT",
-    name: "TransSteel 2700 MV / TPS 320i",
-    desc: "Інверторний апарат для роботи з тонким металом. Чисті шви на 0.7 мм без пропалень.",
-    spec: <>MIG/MAG · до <strong>320 А</strong> · imp. кріплення</>,
-    ph: "Зварювальний апарат Fronius",
-  },
-  {
-    n: "06",
-    brand: "RUPES · IT",
-    name: "BigFoot 21 + Mille Series",
-    desc: "Орбітальна полірувальна установка з різними головами. Глибоке полірування без перегріву лаку.",
-    spec: <>21 mm орбіта · <strong>4500 rpm</strong></>,
-    ph: "Полірувальна машина RUPES",
-  },
+  { n:"01", brand:"SATA · DE",       name:"SATAjet X 5500 PHASER",              desc:"Робочий пістолет для перлинових і ксиралік-кольорів. Точне розпилення без муарного ефекту.",                        spec:<>Дюза <strong>1.3 RP</strong> · робочий тиск <strong>2.0 бар</strong></>,    ph:"Фарбопульт SATA",                img:`${T}01-sata-gun.jpg` },
+  { n:"02", brand:"USI Italia",       name:"Spray booth Chronotech 6m",          desc:"Двокамерна установка з контролем температури та вологості. Ідеально для довгих циклів сушки лаку.",                spec:<>До <strong>+70 °C</strong> · фільтрація 99.9%</>,                             ph:"Кабіна фарбування",               img:`${T}02-spray-booth.png` },
+  { n:"03", brand:"Car-O-Liner · SE", name:"Стапель з лазерним вимірюванням",   desc:"Витягуємо геометрію кузова з точністю до десятих міліметра. Працюємо з алюмінієм і високоміцними сталями.",      spec:<>Точність <strong>±0.2 мм</strong> · до 6 точок</>,                           ph:"Стапель з лазерним контролем",    img:`${T}03-stapel.jpg` },
+  { n:"04", brand:"X-Rite · US",      name:"Спектрофотометр MA-T6+",             desc:"Сканує колір з 6 кутів. Точний підбір рецепту на старому, вигорілому ЛКП. Жодних здогадок.",                      spec:<>6 кутів · бібліотека <strong>250k+ кольорів</strong></>,                     ph:"Спектрофотометр X-Rite",          img:`${T}04-xrite.jpg` },
+  { n:"05", brand:"Fronius · AT",     name:"TransSteel 2700 MV / TPS 320i",      desc:"Інверторний апарат для роботи з тонким металом. Чисті шви на 0.7 мм без пропалень.",                              spec:<>MIG/MAG · до <strong>320 А</strong> · imp. кріплення</>,                     ph:"Зварювальний апарат Fronius",     img:`${T}05-fronius.jpg` },
+  { n:"06", brand:"RUPES · IT",       name:"BigFoot 21 + Mille Series",          desc:"Орбітальна полірувальна установка з різними головами. Глибоке полірування без перегріву лаку.",                   spec:<>21 mm орбіта · <strong>4500 rpm</strong></>,                                  ph:"Полірувальна машина RUPES",       img:`${T}06-rupes.webp` },
 ];
 
 const QUOTES = [
@@ -240,9 +199,7 @@ export default function MasterClient() {
           01 HERO PORTRAIT
           ============================================================ */}
       <section className="ms-hero">
-        <div className="hero-bg" aria-hidden="true">
-          <span className="ms-img-slot">[ Майстер у цеху — портрет з відблиском світла ]</span>
-        </div>
+        <div className="hero-bg" aria-hidden="true" style={{ backgroundImage:"url('/assets/master/portrait-work.jpg')", backgroundSize:"cover", backgroundPosition:"center top" }} />
         <div className="hero-grain" aria-hidden="true" />
 
         <span className="personal-stamp" aria-hidden="true">
@@ -345,9 +302,7 @@ export default function MasterClient() {
 
           <div className="ms-manifesto">
 
-            <div className="manifesto-photo ct-corners">
-              <span className="ms-img-slot">[ Майстер у масці фарбувальника / руки на крилі ]</span>
-            </div>
+            <div className="manifesto-photo ct-corners" style={{ backgroundImage:"url('/assets/master/portrait.jpg')", backgroundSize:"cover", backgroundPosition:"center" }} />
 
             <div className="manifesto-text">
               <div className="quote-mark" aria-hidden="true">„</div>
@@ -537,11 +492,11 @@ export default function MasterClient() {
           </header>
 
           <div className="tools-grid">
-            {TOOLS.map(({ n, brand, name, desc, spec, ph }) => (
+            {TOOLS.map(({ n, brand, name, desc, spec, ph, img }) => (
               <article key={n} className="tool">
-                <div className="tool-media">
+                <div className="tool-media" style={img ? { backgroundImage:`url('${img}')`, backgroundSize:"cover", backgroundPosition:"center" } : undefined}>
                   <span className="badge">// Tool {n}</span>
-                  <span className="ms-img-slot">{ph}</span>
+                  {!img && <span className="ms-img-slot">{ph}</span>}
                 </div>
                 <div className="tool-body">
                   <span className="brand">{brand}</span>
@@ -592,11 +547,7 @@ export default function MasterClient() {
         <div className="container">
           <div className="sig-grid">
 
-            <div className="sig-portrait">
-              <span className="ms-img-slot" style={{ borderRadius: "50%", fontSize: "10px" }}>
-                [ Майстер — портрет ]
-              </span>
-            </div>
+            <div className="sig-portrait" style={{ backgroundImage:"url('/assets/master/portrait.jpg')", backgroundSize:"cover", backgroundPosition:"center top" }} />
 
             <div className="sig-body">
               <span className="k">// Особисто від мене</span>

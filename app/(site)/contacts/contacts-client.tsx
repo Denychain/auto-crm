@@ -255,6 +255,14 @@ export default function ContactsClient() {
                 <em>Орієнтир:</em> {CONTACTS.addressHint}
               </div>
 
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/contacts/landmark.png"
+                alt="Орієнтир — заправка ОККО, поворот з об'їзної"
+                loading="lazy"
+                style={{ width:"100%", borderRadius:4, marginTop:12, border:"1px solid rgba(255,255,255,.06)", display:"block" }}
+              />
+
               <a
                 href={CONTACTS.googleMaps}
                 target="_blank"

@@ -144,6 +144,8 @@ const CASES = [
       { v: "14 днів", accent: false, l: "Тривалість\nремонту" },
       { v: "$27.4k", accent: false, l: "Final\nall-in" },
     ],
+    imgBefore: "/assets/us/cases/bmw3-before.jpg",
+    imgAfter:  "/assets/us/cases/bmw3-after.jpg",
     before: "BMW 3 · Copart NJ",
     after:  "BMW 3 · NICE.car.if",
   },
@@ -159,6 +161,8 @@ const CASES = [
       { v: "47 днів", accent: false, l: "Лот → видача" },
       { v: "$38.6k", accent: false, l: "Final\nall-in" },
     ],
+    imgBefore: "/assets/us/cases/tesla-y-before.jpg",
+    imgAfter:  "/assets/us/cases/tesla-y-after.jpg",
     before: "Tesla Y · IAAI NY",
     after:  "Tesla Y · NICE.car.if",
   },
@@ -174,6 +178,8 @@ const CASES = [
       { v: "9 днів", accent: false, l: "Тривалість\nремонту" },
       { v: "$32.1k", accent: false, l: "Final\nall-in" },
     ],
+    imgBefore: "/assets/us/cases/f150-before.jpg",
+    imgAfter:  "/assets/us/cases/f150-after.jpg",
     before: "F-150 · Copart TX",
     after:  "F-150 · NICE.car.if",
   },
@@ -326,17 +332,15 @@ export default function UsCarsClient() {
 
           <div className="proc-grid">
             {[
-              { n: "01", meta: "// Підбір лоту",       title: "Аукціон",            timing: "2–7 днів",   ph: "Copart/IAAI · підбір лоту",       body: (<>Шукаємо авто за вашим бюджетом і вимогами. Перевіряємо <strong>Carfax / Autocheck</strong>, фото пошкоджень, історію власників.</>) },
-              { n: "02", meta: "// Оцінка майстра",    title: "Прорахунок ремонту", timing: "24 год",     ph: "Лот зблизька — оцінка пошкоджень", body: (<>Власник сервісу <strong>особисто</strong> оцінює фото та live-огляд лоту. Даємо чесну вилку вартості відновлення <em>до</em> ставки.</>) },
-              { n: "03", meta: "// Ставка та оплата",  title: "Виграли лот",        timing: "2 дні",      ph: "Авто на аукціоні після виграшу",   body: (<>Робимо ставку згідно стратегії. Після перемоги — оплата лоту і аукційні збори в межах <strong>2 робочих днів</strong>.</>) },
-              { n: "04", meta: "// Logistics · Shipping", title: "Доставка",         timing: "35–55 днів", ph: "Контейнер у порту LA / NY",        body: (<>Internal trucking → морський контейнер → Гданськ → автовоз до Франківська. Прозорий <strong>трекінг по контейнеру</strong>.</>) },
-              { n: "05", meta: "// Customs · Реєстрація", title: "Розтаможення",    timing: "3–7 днів",   ph: "Розтаможення / зважування",        body: (<>Сплачуємо мито/акциз/ПДВ за чесною формулою. Реєстрація в МВС, видача номерних знаків. <strong>Без сірих схем.</strong></>) },
-              { n: "06", meta: "// Ремонт · Видача",   title: "Ключі вам",          timing: "14–30 днів", ph: "Готове авто на видачі в цеху",     body: (<>Кузовний ремонт у нашому цеху, фарбування, повна передпродажна підготовка. <em>Ви забираєте ціле авто, готове до експлуатації.</em></>) },
+              { n:"01", meta:"// Підбір лоту",          title:"Аукціон",            timing:"2–7 днів",   img:"/assets/us/process/01-auction.png",    body:(<>Шукаємо авто за вашим бюджетом і вимогами. Перевіряємо <strong>Carfax / Autocheck</strong>, фото пошкоджень, історію власників.</>) },
+              { n:"02", meta:"// Оцінка майстра",       title:"Прорахунок ремонту", timing:"24 год",     img:"/assets/us/process/02-inspection.jpg", body:(<>Власник сервісу <strong>особисто</strong> оцінює фото та live-огляд лоту. Даємо чесну вилку вартості відновлення <em>до</em> ставки.</>) },
+              { n:"03", meta:"// Ставка та оплата",     title:"Виграли лот",        timing:"2 дні",      img:"/assets/us/process/03-bid.jpg",        body:(<>Робимо ставку згідно стратегії. Після перемоги — оплата лоту і аукційні збори в межах <strong>2 робочих днів</strong>.</>) },
+              { n:"04", meta:"// Logistics · Shipping", title:"Доставка",           timing:"35–55 днів", img:"/assets/us/process/04-container.jpg",  body:(<>Internal trucking → морський контейнер → Гданськ → автовоз до Франківська. Прозорий <strong>трекінг по контейнеру</strong>.</>) },
+              { n:"05", meta:"// Customs · Реєстрація", title:"Розтаможення",       timing:"3–7 днів",   img:"/assets/us/process/05-customs.webp",   body:(<>Сплачуємо мито/акциз/ПДВ за чесною формулою. Реєстрація в МВС, видача номерних знаків. <strong>Без сірих схем.</strong></>) },
+              { n:"06", meta:"// Ремонт · Видача",      title:"Ключі вам",          timing:"14–30 днів", img:"/assets/us/process/06-delivery.jpg",   body:(<>Кузовний ремонт у нашому цеху, фарбування, повна передпродажна підготовка. <em>Ви забираєте ціле авто, готове до експлуатації.</em></>) },
             ].map((step) => (
               <article className="proc-step" key={step.n}>
-                <div className="media">
-                  <span className="placeholder">{step.ph}</span>
-                </div>
+                <div className="media" style={{ backgroundImage:`url('${step.img}')`, backgroundSize:"cover", backgroundPosition:"center" }} />
                 <div className="body">
                   <div className="num">{step.n}</div>
                   <span className="meta">{step.meta}</span>
@@ -496,13 +500,11 @@ export default function UsCarsClient() {
                 </div>
               </div>
               <div className="case-media">
-                <div className="case-frame">
+                <div className="case-frame" style={c.imgBefore ? { backgroundImage:`url('${c.imgBefore}')`, backgroundSize:"cover", backgroundPosition:"center" } : undefined}>
                   <span className="lbl before">Before · {c.before}</span>
-                  <div className="ph-img">{c.before}</div>
                 </div>
-                <div className="case-frame">
+                <div className="case-frame" style={c.imgAfter ? { backgroundImage:`url('${c.imgAfter}')`, backgroundSize:"cover", backgroundPosition:"center" } : undefined}>
                   <span className="lbl after">After · {c.after}</span>
-                  <div className="ph-img">{c.after}</div>
                 </div>
               </div>
             </article>
@@ -514,9 +516,7 @@ export default function UsCarsClient() {
       <section className="sec sec--dark">
         <div className="container">
           <div className="owner-block">
-            <div className="ob-media ct-corners">
-              <span className="ph">Власник перевіряє лот · Copart</span>
-            </div>
+            <div className="ob-media ct-corners" style={{ backgroundImage:"url('/assets/us/owner-auction.jpg')", backgroundSize:"cover", backgroundPosition:"center" }} />
             <div>
               <div className="eyebrow"><span className="bar" aria-hidden></span><span className="num">06</span><span>Killer feature · USP</span></div>
               <h2>Власник <span className="accent">особисто</span> оглядає кожен лот</h2>
@@ -559,17 +559,16 @@ export default function UsCarsClient() {
 
           <div className="wall" aria-label="Фотогалерея процесу">
             {[
-              { cls: "span-2", tag: "Port · Gdańsk",    ph: "Контейнер у порту" },
-              { cls: "",       tag: "Copart · CA",       ph: "Лот на аукціоні" },
-              { cls: "",       tag: "Lab · колір",       ph: "Підбір фарби" },
-              { cls: "",       tag: "Цех · стапель",     ph: "Авто на стапелі" },
-              { cls: "span-h", tag: "Container · 40HC",  ph: "Розвантаження контейнера" },
-              { cls: "span-v", tag: "Spray booth",       ph: "Фарбувальна камера" },
-              { cls: "",       tag: "IAAI · NY",         ph: "Огляд лоту на IAAI" },
-              { cls: "",       tag: "Detail · фінал",    ph: "Полірування фінального авто" },
+              { cls:"span-2", tag:"Port · Gdańsk",   img:"/assets/us/wall/01-container-gdansk.jpg" },
+              { cls:"",       tag:"Copart · CA",      img:"/assets/us/wall/02-copart-ca.png" },
+              { cls:"",       tag:"Lab · колір",      img:"/assets/us/wall/03-lab-color.png" },
+              { cls:"",       tag:"Цех · стапель",    img:"/assets/us/wall/04-stapel.jpg" },
+              { cls:"span-h", tag:"Container · 40HC", img:"/assets/us/wall/05-unload-40hc.jpg" },
+              { cls:"span-v", tag:"Spray booth",      img:"/assets/us/wall/06-spray-booth.jpg" },
+              { cls:"",       tag:"IAAI · NY",        img:"/assets/us/wall/07-iaai-ny.jpg" },
+              { cls:"",       tag:"Detail · фінал",   img:"/assets/us/wall/08-detail-final.jpg" },
             ].map((item, i) => (
-              <div key={i} className={`wall-item${item.cls ? " " + item.cls : ""}`}>
-                <span className="ph-wall">{item.ph}</span>
+              <div key={i} className={`wall-item${item.cls ? " " + item.cls : ""}`} style={{ backgroundImage:`url('${item.img}')`, backgroundSize:"cover", backgroundPosition:"center" }}>
                 <span className="tag">{item.tag}</span>
               </div>
             ))}
