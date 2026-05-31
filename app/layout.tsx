@@ -21,8 +21,8 @@ export const viewport: Viewport = {
   themeColor: "#1f2937",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // maximumScale і userScalable навмисно відсутні — pinch-to-zoom дозволено
+  // (WCAG 2.1 SC 1.4.4: заборона zoom = порушення доступності)
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

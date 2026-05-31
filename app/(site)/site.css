@@ -4137,6 +4137,32 @@ h1.ph-title .thin{display:block;font-weight:600;color:var(--ink-2);font-size:.42
   .scanner-info{grid-template-columns:1fr}
 }
 
+/* ── iPhone SE, малі Android (≤380px) ─────────────────────── */
+@media (max-width:380px){
+  /* Ширший gutter — менші відступи від краю */
+  :root{ --gutter:16px }
+
+  /* Hero title — дрібніший мінімум щоб не обрізав слова */
+  h1.hero-title{ font-size:clamp(32px, 9vw, 40px) }
+
+  /* Spec-grid у один стовпець */
+  .spec-grid{ grid-template-columns:1fr }
+  .spec-grid > div{ border-right:0; border-bottom:1px solid var(--line) }
+  .spec-grid > div:last-child{ border-bottom:0 }
+
+  /* Mobile menu — менший шрифт у пунктах */
+  .mobile-menu a{ font-size:22px; padding:14px 0 }
+
+  /* Pricing row — ціна на новому рядку */
+  .price-row .price{ margin-top:4px }
+
+  /* Scanner — вища пропорція для вузького екрану */
+  .scanner{ aspect-ratio:4/3 }
+
+  /* Floating call — трохи менше, ближче до краю */
+  .floating-call{ width:48px; height:48px; bottom:16px; right:16px }
+}
+
 /* ============================================================
    MASTER PAGE — /master (Про майстра)
    Scoped hero classes (.ms-hero, .ms-hero-content, .ms-manifesto)
