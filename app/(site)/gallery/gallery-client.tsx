@@ -126,7 +126,7 @@ export default function GalleryClient() {
 
   /* scanner refs */
   const scannerRef    = useRef<HTMLDivElement>(null);
-  const afterLayerRef = useRef<HTMLDivElement>(null);
+  const topLayerRef   = useRef<HTMLDivElement>(null); // BEFORE layer on top, gets clip-path
   const scanLineRef   = useRef<HTMLDivElement>(null);
   const handleRef     = useRef<HTMLButtonElement>(null);
   const draggingRef   = useRef(false);
@@ -146,7 +146,8 @@ export default function GalleryClient() {
   /* scanner drag */
   const setPosition = useCallback((p: number) => {
     p = Math.max(0, Math.min(100, p));
-    if (afterLayerRef.current) afterLayerRef.current.style.clipPath = `inset(0 ${100 - p}% 0 0)`;
+    // topLayerRef = BEFORE layer (on top), clip from right → left side shows BEFORE image
+    if (topLayerRef.current) topLayerRef.current.style.clipPath = `inset(0 ${100 - p}% 0 0)`;
     if (scanLineRef.current)   scanLineRef.current.style.left   = p + "%";
     if (handleRef.current)     handleRef.current.style.left     = p + "%";
     setScanPercent(Math.round(p));
@@ -319,13 +320,15 @@ export default function GalleryClient() {
             ref={scannerRef}
             aria-label="Перетягніть лінію щоб порівняти до/після"
           >
-            <div className="layer before">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/gallery/featured/bmw-m3-before.jpg" alt="BMW M3 до фарбування · Copart NJ" />
-            </div>
-            <div className="layer after" ref={afterLayerRef}>
+            {/* AFTER layer first = bottom; always fully visible (right side = "after") */}
+            <div className="layer after">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/gallery/featured/bmw-m3-after.png" alt="BMW M3 після фарбування · NICE.car.if" />
+            </div>
+            {/* BEFORE layer second = on top; clip-path reveals left portion = "before" side */}
+            <div className="layer before" ref={topLayerRef}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/gallery/featured/bmw-m3-before.jpg" alt="BMW M3 до фарбування · Copart NJ" />
             </div>
 
             <span className="label before">Before · Copart NJ</span>
