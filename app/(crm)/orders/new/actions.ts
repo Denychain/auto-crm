@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { OrderStatus, PhotoType } from "@prisma/client";
+import { OrderStatus, PhotoType, Currency } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth";
 import { getCurrentRate } from "@/lib/exchange-rate";
@@ -53,6 +53,7 @@ export async function createOrderWithPhotos(data: {
   description?: string;
   estimatedPrice: number;
   advancePayment: number;
+  currency?: Currency;
   photoUrls: string[];
 }): Promise<{ orderId: string }> {
   await requireAuth();
@@ -89,6 +90,7 @@ export async function createOrderWithPhotos(data: {
       estimatedPrice: data.estimatedPrice,
       advancePayment: data.advancePayment,
       totalPaid: 0,
+      currency: data.currency ?? Currency.UAH,
       baseExchangeRate,
     },
   });

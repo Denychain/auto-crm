@@ -10,6 +10,7 @@ interface MoneyInputProps {
   value: number;
   currency: Currency;
   onChange: (value: number, currency: Currency) => void;
+  onBlur?: () => void;
   defaultCurrency?: Currency;
   currentRate?: number; // for conversion hint
   placeholder?: string;
@@ -34,6 +35,7 @@ export function MoneyInput({
   value,
   currency,
   onChange,
+  onBlur,
   currentRate,
   placeholder = "0",
   disabled,
@@ -113,6 +115,7 @@ export function MoneyInput({
           onBlur={() => {
             isFocused.current = false;
             prevValueRef.current = value;
+            onBlur?.();
           }}
           onChange={(e) => {
             const text = e.target.value;

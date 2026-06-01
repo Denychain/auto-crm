@@ -12,6 +12,15 @@ function revalidate(orderId: string) {
   revalidatePath("/orders");
 }
 
+/** Дефолтна валюта для нових грошових записів (із Settings, фолбек UAH). */
+async function getDefaultCurrency(): Promise<Currency> {
+  const settings = await prisma.settings.findUnique({
+    where: { id: "singleton" },
+    select: { defaultCurrency: true },
+  });
+  return (settings?.defaultCurrency ?? Currency.UAH) as Currency;
+}
+
 // ── Works ───────────────────────────────────────────────────────────────────
 
 export async function addWork(

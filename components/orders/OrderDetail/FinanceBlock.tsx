@@ -2,12 +2,13 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { Loader2, Save } from "lucide-react";
+import { Currency } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/currency";
+import { formatMoney, convert } from "@/lib/currency";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { updateFinance } from "@/app/(crm)/orders/[id]/actions";
 import type { FullOrder } from "@/types/orders";
@@ -19,46 +20,64 @@ interface FinanceBlockProps {
 }
 
 export function FinanceBlock({ order, totals }: FinanceBlockProps) {
-  const { displayCurrency } = useCurrency();
+  const { displayCurrency, rate } = useCurrency();
 
   function fmt(amount: number) {
     return formatMoney(amount, displayCurrency);
   }
 
+  // Валюта замовлення — спільна для ціни, завдатку та оплати
+  const initialCurrency = (((order as { currency?: string }).currency) ?? Currency.UAH) as Currency;
+
   // Локальний стан лише для editable inputs — щоб уникнути втрати фокусу (CRM-B01)
-  const [estimatedPrice, setEstimatedPrice] = useState(
-    Number(order.estimatedPrice).toFixed(2)
-  );
-  const [advPay, setAdvPay] = useState(Number(order.advancePayment).toFixed(2));
-  const [totalPaid, setTotalPaid] = useState(Number(order.totalPaid).toFixed(2));
+  const [estimatedPrice, setEstimatedPrice] = useState(Number(order.estimatedPrice));
+  const [advPay, setAdvPay] = useState(Number(order.advancePayment));
+  const [totalPaid, setTotalPaid] = useState(Number(order.totalPaid));
+  const [orderCurrency, setOrderCurrency] = useState<Currency>(initialCurrency);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(true);
 
   // Синхронізуємо локальний стан з пропсами при зовнішніх змінах (наприклад,
   // router.refresh() після збереження з іншого пристрою)
   useEffect(() => {
-    setEstimatedPrice(Number(order.estimatedPrice).toFixed(2));
+    setEstimatedPrice(Number(order.estimatedPrice));
   }, [order.estimatedPrice]);
 
   useEffect(() => {
-    setAdvPay(Number(order.advancePayment).toFixed(2));
+    setAdvPay(Number(order.advancePayment));
   }, [order.advancePayment]);
 
   useEffect(() => {
-    setTotalPaid(Number(order.totalPaid).toFixed(2));
+    setTotalPaid(Number(order.totalPaid));
   }, [order.totalPaid]);
 
-  // Борг рахується з урахуванням локально відредагованих полів (до натискання «Зберегти»)
-  const localPaid = parseFloat(totalPaid) || 0;
-  const localAdv = parseFloat(advPay) || 0;
-  const debt = Math.max(0, totals.orderTotal - localPaid - localAdv);
+  useEffect(() => {
+    setOrderCurrency(initialCurrency);
+  }, [initialCurrency]);
+
+  // Борг рахується в одній валюті: локальні поля (валюта замовлення) приводимо
+  // до displayCurrency перед відніманням від нормалізованого orderTotal.
+  const localPaid = totalPaid || 0;
+  const localAdv = advPay || 0;
+  const paidInDisplay = convert(
+    { amount: localPaid, currency: orderCurrency },
+    displayCurrency,
+    rate ?? undefined
+  );
+  const advInDisplay = convert(
+    { amount: localAdv, currency: orderCurrency },
+    displayCurrency,
+    rate ?? undefined
+  );
+  const debt = Math.max(0, totals.orderTotal - paidInDisplay - advInDisplay);
 
   function handleSave() {
     startTransition(async () => {
       await updateFinance(order.id, {
         totalPaid: localPaid,
         advancePayment: localAdv,
-        estimatedPrice: parseFloat(estimatedPrice) || 0,
+        estimatedPrice: estimatedPrice || 0,
+        currency: orderCurrency,
       });
       setSaved(true);
     });
@@ -69,8 +88,7 @@ export function FinanceBlock({ order, totals }: FinanceBlockProps) {
   }
 
   function addToPaid(amount: number) {
-    const next = (localPaid + amount).toFixed(2);
-    setTotalPaid(next);
+    setTotalPaid((prev) => Math.round((prev + amount) * 100) / 100);
     markDirty();
   }
 
@@ -90,17 +108,17 @@ export function FinanceBlock({ order, totals }: FinanceBlockProps) {
         {/* Орієнтовна ціна */}
         <div className="flex items-center justify-between gap-2 py-1 text-sm">
           <span className="shrink-0 text-muted-foreground">Орієнтовна ціна</span>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
+          <MoneyInput
             value={estimatedPrice}
-            onChange={(e) => {
-              setEstimatedPrice(e.target.value);
+            currency={orderCurrency}
+            currentRate={rate ?? undefined}
+            onChange={(v, c) => {
+              setEstimatedPrice(v);
+              setOrderCurrency(c);
               markDirty();
             }}
             disabled={isPending}
-            className="w-28 text-right text-sm"
+            className="w-36"
           />
         </div>
 
@@ -128,34 +146,34 @@ export function FinanceBlock({ order, totals }: FinanceBlockProps) {
         {/* Editable: завдаток */}
         <div className="flex items-center justify-between gap-2 py-1 text-sm">
           <span className="shrink-0 text-muted-foreground">Завдаток</span>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
+          <MoneyInput
             value={advPay}
-            onChange={(e) => {
-              setAdvPay(e.target.value);
+            currency={orderCurrency}
+            currentRate={rate ?? undefined}
+            onChange={(v, c) => {
+              setAdvPay(v);
+              setOrderCurrency(c);
               markDirty();
             }}
             disabled={isPending}
-            className="w-28 text-right text-sm"
+            className="w-36"
           />
         </div>
 
         {/* Editable: оплачено + quick buttons */}
         <div className="flex items-center justify-between gap-2 py-1 text-sm">
           <span className="shrink-0 text-muted-foreground">Оплачено</span>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
+          <MoneyInput
             value={totalPaid}
-            onChange={(e) => {
-              setTotalPaid(e.target.value);
+            currency={orderCurrency}
+            currentRate={rate ?? undefined}
+            onChange={(v, c) => {
+              setTotalPaid(v);
+              setOrderCurrency(c);
               markDirty();
             }}
             disabled={isPending}
-            className="w-28 text-right text-sm"
+            className="w-36"
           />
         </div>
         <div className="flex gap-1.5">
@@ -171,7 +189,7 @@ export function FinanceBlock({ order, totals }: FinanceBlockProps) {
           ))}
         </div>
         <p className="text-center text-[10px] text-muted-foreground">
-          Платіж у валюті замовлення ({((order as { currency?: string }).currency) ?? "UAH"})
+          Платіж у валюті замовлення ({orderCurrency})
         </p>
 
         <Separator className="my-1" />

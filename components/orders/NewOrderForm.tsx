@@ -4,10 +4,12 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Search, CheckCircle2, User, Car } from "lucide-react";
 import { toast } from "sonner";
+import { Currency } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { cn } from "@/lib/utils";
 import { uploadImage } from "@/lib/cloudinary";
 import {
@@ -62,7 +64,15 @@ function Section({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function NewOrderForm() {
+interface NewOrderFormProps {
+  defaultCurrency?: Currency;
+  rate?: number | null;
+}
+
+export function NewOrderForm({
+  defaultCurrency = Currency.UAH,
+  rate = null,
+}: NewOrderFormProps) {
   const router = useRouter();
 
   // ── step state ───────────────────────────────────────────────────────────
@@ -93,8 +103,10 @@ export function NewOrderForm() {
 
   // ── step 3 — work ────────────────────────────────────────────────────────
   const [description, setDescription] = useState("");
-  const [estimatedPrice, setEstimatedPrice] = useState("");
-  const [advancePayment, setAdvancePayment] = useState("0");
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+  const [advancePayment, setAdvancePayment] = useState(0);
+  // Ціна і завдаток — в одній валюті замовлення (дефолт із Settings.defaultCurrency)
+  const [orderCurrency, setOrderCurrency] = useState<Currency>(defaultCurrency);
 
   // ── step 4 — photos ──────────────────────────────────────────────────────
   const [photoSlots, setPhotoSlots] = useState<PhotoSlotState[]>(initSlots);
@@ -201,8 +213,9 @@ export function NewOrderForm() {
         clientName: foundClient?.name ?? clientName,
         clientPhone: foundClient?.phone ?? phone,
         description: description || undefined,
-        estimatedPrice: parseFloat(estimatedPrice) || 0,
-        advancePayment: parseFloat(advancePayment) || 0,
+        estimatedPrice: estimatedPrice,
+        advancePayment: advancePayment,
+        currency: orderCurrency,
         photoUrls: [...existingUrls, ...uploadedUrls],
       });
 
@@ -409,28 +422,30 @@ export function NewOrderForm() {
 
               <div className="flex gap-2">
                 <div className="flex flex-1 flex-col gap-1">
-                  <label className="text-xs text-muted-foreground">Орієнтовна ціна (₴)</label>
-                  <Input
+                  <label className="text-xs text-muted-foreground">Орієнтовна ціна</label>
+                  <MoneyInput
                     value={estimatedPrice}
-                    onChange={(e) => setEstimatedPrice(e.target.value)}
-                    type="number"
-                    min="0"
-                    step="100"
+                    currency={orderCurrency}
+                    currentRate={rate ?? undefined}
+                    onChange={(v, c) => {
+                      setEstimatedPrice(v);
+                      setOrderCurrency(c);
+                    }}
                     placeholder="0"
-                    className="h-12 text-right text-lg"
                     disabled={isSaving}
                   />
                 </div>
                 <div className="flex flex-1 flex-col gap-1">
-                  <label className="text-xs text-muted-foreground">Завдаток (₴)</label>
-                  <Input
+                  <label className="text-xs text-muted-foreground">Завдаток</label>
+                  <MoneyInput
                     value={advancePayment}
-                    onChange={(e) => setAdvancePayment(e.target.value)}
-                    type="number"
-                    min="0"
-                    step="50"
+                    currency={orderCurrency}
+                    currentRate={rate ?? undefined}
+                    onChange={(v, c) => {
+                      setAdvancePayment(v);
+                      setOrderCurrency(c);
+                    }}
                     placeholder="0"
-                    className="h-12 text-right text-lg"
                     disabled={isSaving}
                   />
                 </div>

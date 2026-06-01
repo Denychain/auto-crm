@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   ChevronDown,
 } from "lucide-react";
-import type { Worker, WorkerRole, ShareTemplate, ShareTemplateRule } from "@prisma/client";
+import { Currency, type Worker, type WorkerRole, type ShareTemplate, type ShareTemplateRule } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/currency";
 import type { OrderTotals } from "@/lib/finance";
@@ -59,23 +60,27 @@ function WorkerRow({
   base: number;
   onDelete: (id: string) => void;
   onUpdatePercent: (id: string, pct: number) => void;
-  onUpdateAmount: (id: string, amt: number) => void;
+  onUpdateAmount: (id: string, amt: number, currency: Currency) => void;
   disabled: boolean;
 }) {
-  const { displayCurrency } = useCurrency();
+  const { displayCurrency, rate } = useCurrency();
   const isPercent = share.sharePercent != null;
 
   // local state for the editable field
   const [localPct, setLocalPct] = useState(
     share.sharePercent != null ? String(share.sharePercent) : ""
   );
-  const [localAmt, setLocalAmt] = useState(Number(share.amount).toFixed(2));
+  const [localAmt, setLocalAmt] = useState(Number(share.amount));
+  // Валюта фіксованої суми — власна для кожного запису (дефолт displayCurrency)
+  const [shareCurrency, setShareCurrency] = useState<Currency>(
+    (((share as { currency?: string }).currency) ?? displayCurrency) as Currency
+  );
   const [usePercent, setUsePercent] = useState(isPercent);
 
   // B05: sync local state when share prop changes (e.g. after template application)
-  // Only update if the field is not currently focused to avoid interrupting user typing
+  // Only update if the field is not currently focused to avoid interrupting user typing.
+  // MoneyInput guards its own focus, so localAmt can be synced unconditionally.
   const pctFocused = useRef(false);
-  const amtFocused = useRef(false);
   const prevShareRef = useRef(share);
   useEffect(() => {
     const prev = prevShareRef.current;
@@ -87,17 +92,16 @@ function WorkerRow({
       if (!pctFocused.current) {
         setLocalPct(share.sharePercent != null ? String(share.sharePercent) : "");
       }
-      if (!amtFocused.current) {
-        setLocalAmt(Number(share.amount).toFixed(2));
-      }
+      setLocalAmt(Number(share.amount));
+      setShareCurrency((((share as { currency?: string }).currency) ?? displayCurrency) as Currency);
       setUsePercent(share.sharePercent != null);
     }
-  }, [share]);
+  }, [share, displayCurrency]);
 
-  // computed display amount when in % mode
+  // computed display amount when in % mode (base уже в displayCurrency)
   const computedAmount = usePercent
     ? (base * (parseFloat(localPct) || 0)) / 100
-    : parseFloat(localAmt) || 0;
+    : localAmt || 0;
 
   function handleBlurPct() {
     const pct = parseFloat(localPct);
@@ -105,16 +109,16 @@ function WorkerRow({
   }
 
   function handleBlurAmt() {
-    const amt = parseFloat(localAmt);
-    if (!isNaN(amt)) onUpdateAmount(share.id, amt);
+    onUpdateAmount(share.id, localAmt, shareCurrency);
   }
 
   function toggleMode() {
     if (usePercent) {
-      // switch to fixed amount — prefill with current computed
-      setLocalAmt(computedAmount.toFixed(2));
+      // switch to fixed amount — prefill with current computed (у displayCurrency)
+      setLocalAmt(computedAmount);
+      setShareCurrency(displayCurrency);
       setUsePercent(false);
-      onUpdateAmount(share.id, computedAmount);
+      onUpdateAmount(share.id, computedAmount, displayCurrency);
     } else {
       // switch to %
       const pct = base > 0 ? (computedAmount / base) * 100 : 0;
@@ -138,14 +142,14 @@ function WorkerRow({
         </div>
       </div>
 
-      {/* % / ₴ toggle button */}
+      {/* % / сума toggle button */}
       <button
         onClick={toggleMode}
         disabled={disabled}
         title={usePercent ? "Перейти до фіксованої суми" : "Перейти до %"}
         className="shrink-0 rounded border px-1.5 py-1 text-[10px] font-medium text-muted-foreground hover:border-foreground/40 hover:text-foreground disabled:opacity-40"
       >
-        {usePercent ? "%" : "₴"}
+        {usePercent ? "%" : "="}
       </button>
 
       {/* Input field */}
@@ -169,17 +173,17 @@ function WorkerRow({
           </span>
         </div>
       ) : (
-        <Input
-          type="number"
-          min="0"
-          step="0.01"
+        <MoneyInput
           value={localAmt}
-          onChange={(e) => setLocalAmt(e.target.value)}
-          onFocus={() => { amtFocused.current = true; }}
-          onBlur={() => { amtFocused.current = false; handleBlurAmt(); }}
+          currency={shareCurrency}
+          currentRate={rate ?? undefined}
+          onChange={(v, c) => {
+            setLocalAmt(v);
+            setShareCurrency(c);
+          }}
+          onBlur={handleBlurAmt}
           disabled={disabled}
-          className="w-28 text-right text-sm"
-          placeholder="₴"
+          className="w-36"
         />
       )}
 
@@ -212,6 +216,7 @@ function AddWorkerDialog({
   preselectedRole?: WorkerRole;
 }) {
   const router = useRouter();
+  const { displayCurrency, rate } = useCurrency();
   const [isPending, startTransition] = useTransition();
 
   const [selectedWorkerId, setSelectedWorkerId] = useState("");
@@ -220,7 +225,8 @@ function AddWorkerDialog({
   );
   const [usePercent, setUsePercent] = useState(true);
   const [pctValue, setPctValue] = useState("");
-  const [amtValue, setAmtValue] = useState("");
+  const [amtValue, setAmtValue] = useState(0);
+  const [amtCurrency, setAmtCurrency] = useState<Currency>(displayCurrency);
 
   const selectedWorker = workers.find((w) => w.id === selectedWorkerId);
   const availableRoles = selectedWorker
@@ -251,7 +257,8 @@ function AddWorkerDialog({
         selectedWorkerId,
         selectedRole as WorkerRole,
         usePercent ? (parseFloat(pctValue) || 0) : null,
-        usePercent ? null : (parseFloat(amtValue) || 0)
+        usePercent ? null : (amtValue || 0),
+        usePercent ? undefined : amtCurrency
       );
       router.refresh();
       onClose();
@@ -348,13 +355,15 @@ function AddWorkerDialog({
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
-              <Label>Сума (₴)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
+              <Label>Сума</Label>
+              <MoneyInput
                 value={amtValue}
-                onChange={(e) => setAmtValue(e.target.value)}
+                currency={amtCurrency}
+                currentRate={rate ?? undefined}
+                onChange={(v, c) => {
+                  setAmtValue(v);
+                  setAmtCurrency(c);
+                }}
                 placeholder="3000"
               />
             </div>
@@ -640,9 +649,9 @@ export function WorkerShares({
     });
   }
 
-  function handleUpdateAmount(shareId: string, amt: number) {
+  function handleUpdateAmount(shareId: string, amt: number, currency: Currency) {
     startTransition(async () => {
-      await updateWorkerShareAmount(shareId, orderId, amt);
+      await updateWorkerShareAmount(shareId, orderId, amt, currency);
       router.refresh();
     });
   }
