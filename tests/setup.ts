@@ -38,6 +38,9 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    client: { upsert: vi.fn(), findUnique: vi.fn() },
+    vehicle: { upsert: vi.fn(), findUnique: vi.fn() },
+    orderPhoto: { create: vi.fn(), createMany: vi.fn(), delete: vi.fn() },
     orderWork: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     orderPart: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     workerShare: {

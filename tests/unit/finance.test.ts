@@ -4,6 +4,16 @@ import { Currency } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { prisma } from "@/lib/prisma";
 
+// requireAuth тягне next-auth (@/auth) — мокаємо, щоб тести з server actions
+// не падали на резолві next/server у jsdom-середовищі.
+vi.mock("@/lib/auth", () => ({
+  requireAuth: vi.fn().mockResolvedValue({ id: "u1", name: "Test" }),
+  getCurrentUser: vi.fn().mockResolvedValue({ id: "u1", name: "Test" }),
+}));
+
+import { createOrderWithPhotos } from "@/app/(crm)/orders/new/actions";
+import { updateWorkerShareAmount } from "@/app/(crm)/orders/[id]/actions";
+
 const mockPrisma = vi.mocked(prisma);
 import {
   startOfDay, endOfDay,
@@ -151,5 +161,83 @@ describe("handleOrderClosed", () => {
         data: { currentAmount: { increment: 350 } },
       })
     );
+  });
+});
+
+// ── createOrderWithPhotos: збереження валюти (ext.change #12) ──────────────────
+describe("createOrderWithPhotos currency", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // getCurrentRate() → читає кешований курс із БД
+    mockPrisma.exchangeRate.findUnique.mockResolvedValue({ usdToUah: new Decimal(40) } as never);
+    mockPrisma.client.upsert.mockResolvedValue({ id: "c1" } as never);
+    mockPrisma.vehicle.upsert.mockResolvedValue({ id: "v1" } as never);
+    mockPrisma.order.create.mockResolvedValue({ id: "o1" } as never);
+  });
+
+  const baseInput = {
+    plate: "AA1234BB",
+    make: "BMW",
+    model: "X5",
+    clientName: "Іван",
+    clientPhone: "+380671112233",
+    estimatedPrice: 1000,
+    advancePayment: 200,
+    photoUrls: [] as string[],
+  };
+
+  it("stores currency=USD when order created in USD", async () => {
+    await createOrderWithPhotos({ ...baseInput, currency: Currency.USD });
+
+    expect(mockPrisma.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ currency: Currency.USD }),
+      })
+    );
+  });
+
+  it("defaults to UAH when currency omitted", async () => {
+    await createOrderWithPhotos(baseInput);
+
+    expect(mockPrisma.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ currency: Currency.UAH }),
+      })
+    );
+  });
+});
+
+// ── updateWorkerShareAmount: фіксована сума у $ не масштабується (ext.change #12) ─
+describe("updateWorkerShareAmount currency", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPrisma.exchangeRate.findUnique.mockResolvedValue({ usdToUah: new Decimal(40) } as never);
+    mockPrisma.workerShare.update.mockResolvedValue({} as never);
+  });
+
+  it("saves the exact USD amount with currency=USD (no multiply/divide by rate)", async () => {
+    await updateWorkerShareAmount("ws1", "o1", 100, Currency.USD);
+
+    expect(mockPrisma.workerShare.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "ws1" },
+        data: expect.objectContaining({
+          sharePercent: null,
+          amount: 100, // саме 100, не 100*40 і не 100/40
+          currency: Currency.USD,
+        }),
+      })
+    );
+  });
+
+  it("leaves currency untouched when not provided", async () => {
+    await updateWorkerShareAmount("ws1", "o1", 250);
+
+    const call = mockPrisma.workerShare.update.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(call.data.amount).toBe(250);
+    expect(call.data.sharePercent).toBeNull();
+    expect("currency" in call.data).toBe(false);
   });
 });

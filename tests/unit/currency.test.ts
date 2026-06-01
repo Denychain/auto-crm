@@ -6,6 +6,12 @@ import {
   formatMoneyShort,
   parseMoneyInput,
 } from "@/lib/currency";
+import {
+  toDisplay,
+  computeOrderTotals,
+  computeOrderDebt,
+  type OrderForTotals,
+} from "@/lib/finance-pure";
 import { Currency } from "@prisma/client";
 
 // UAH format uses non-breaking space (U+00A0) as thousands separator and before ₴
@@ -181,5 +187,70 @@ describe("parseMoneyInput", () => {
   it("returns 0 for empty/invalid input", () => {
     expect(parseMoneyInput("").amount).toBe(0);
     expect(parseMoneyInput("abc").amount).toBe(0);
+  });
+});
+
+// ── Currency selection in forms (ext.change #12) ──────────────────────────────
+// Сценарії з ТЗ: борг коректний при displayCurrency=UAH для USD-замовлення;
+// виплата майстру в $ після збереження не множиться/ділиться на курс.
+
+describe("USD order debt is correct when displayCurrency = UAH", () => {
+  // Замовлення у USD: роботи $100 @ rate 40, завдаток $20, оплачено $30.
+  const usdOrder: OrderForTotals = {
+    currency: Currency.USD,
+    baseExchangeRate: 40,
+    advancePayment: 20,
+    totalPaid: 30,
+    works: [{ price: 100, currency: Currency.USD, exchangeRate: 40 }],
+    parts: [],
+  };
+
+  it("outstanding in USD (order currency) is 50", () => {
+    const totals = computeOrderTotals(usdOrder, Currency.USD, 41);
+    expect(totals.orderTotal).toBe(100);
+    expect(totals.advance).toBe(20);
+    expect(totals.paid).toBe(30);
+    expect(totals.outstanding).toBe(50);
+  });
+
+  it("outstanding in UAH (display currency) is 2000 — converted, not mixed", () => {
+    const totals = computeOrderTotals(usdOrder, Currency.UAH, 41);
+    // 100*40 − 20*40 − 30*40 = 4000 − 800 − 1200 = 2000
+    expect(totals.orderTotal).toBe(4000);
+    expect(totals.outstanding).toBe(2000);
+  });
+
+  it("computeOrderDebt keeps both currencies consistent (50 USD = 2000 UAH)", () => {
+    const debt = computeOrderDebt(usdOrder, Currency.UAH, 41);
+    expect(debt.debtInOrderCurrency).toBe(50);
+    expect(debt.debtInDisplayCurrency).toBe(2000);
+    expect(debt.orderCurrency).toBe(Currency.USD);
+    expect(debt.isPaid).toBe(false);
+  });
+});
+
+describe("worker payment in $ is not scaled by rate when stored in its own currency", () => {
+  it("toDisplay($→$) returns the amount unchanged (no multiply/divide)", () => {
+    // Виплата $100, exchangeRate=40, відображення у USD → лишається $100
+    expect(toDisplay(100, Currency.USD, 40, Currency.USD, 41)).toBe(100);
+  });
+
+  it("toDisplay($→₴) multiplies by the frozen per-record rate exactly once", () => {
+    expect(toDisplay(100, Currency.USD, 40, Currency.UAH, 41)).toBe(4000);
+  });
+
+  it("a USD share aggregates correctly in USD totals", () => {
+    const order: OrderForTotals = {
+      currency: Currency.USD,
+      baseExchangeRate: 40,
+      works: [{ price: 100, currency: Currency.USD, exchangeRate: 40 }],
+      parts: [],
+      workerShares: [{ amount: 100, currency: Currency.USD, exchangeRate: 40 }],
+    };
+    const totals = computeOrderTotals(order, Currency.USD, 41);
+    // pool = works = 100, allocated = 100 → не помножено на курс
+    expect(totals.poolForPeople).toBe(100);
+    expect(totals.allocatedToWorkers).toBe(100);
+    expect(totals.ownerRemainder).toBe(0);
   });
 });
