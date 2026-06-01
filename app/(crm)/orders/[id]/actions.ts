@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { PartStatus, Currency, WorkerRole } from "@prisma/client";
+import { PartStatus, Currency, WorkerRole, PhotoType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { requireAuth } from "@/lib/auth";
@@ -148,15 +148,28 @@ export async function deletePart(
 
 export async function updateFinance(
   orderId: string,
-  data: { totalPaid: number; advancePayment: number; estimatedPrice?: number }
+  data: { totalPaid: number; advancePayment: number; estimatedPrice?: number; currency?: Currency }
 ): Promise<void> {
   await requireAuth();
+  // При зміні валюти замовлення — заморожуємо поточний курс у baseExchangeRate
+  let rateUpdate: Record<string, unknown> = {};
+  if (data.currency) {
+    const current = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { currency: true },
+    });
+    if (current && current.currency !== data.currency) {
+      rateUpdate = { baseExchangeRate: await getCurrentRate() };
+    }
+  }
   await prisma.order.update({
     where: { id: orderId },
     data: {
       totalPaid: data.totalPaid,
       advancePayment: data.advancePayment,
       ...(data.estimatedPrice !== undefined ? { estimatedPrice: data.estimatedPrice } : {}),
+      ...(data.currency ? { currency: data.currency } : {}),
+      ...rateUpdate,
     },
   });
   revalidate(orderId);
@@ -351,4 +364,32 @@ export async function deletePhoto(
   await requireAuth();
   await prisma.orderPhoto.delete({ where: { id: photoId } });
   revalidate(orderId);
+}
+
+export async function addProcessPhotos(
+  orderId: string,
+  photoUrls: string[],
+  description?: string
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  await requireAuth();
+
+  if (photoUrls.length === 0) {
+    return { ok: false, error: "Не передано жодного фото" };
+  }
+
+  try {
+    await prisma.orderPhoto.createMany({
+      data: photoUrls.map((url) => ({
+        orderId,
+        url,
+        type: PhotoType.PROCESS,
+        description: description?.trim() || null,
+      })),
+    });
+    revalidate(orderId);
+    return { ok: true, count: photoUrls.length };
+  } catch (err) {
+    console.error("[addProcessPhotos]", err);
+    return { ok: false, error: "Не вдалося зберегти фото. Спробуйте ще раз." };
+  }
 }

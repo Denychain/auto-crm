@@ -1,8 +1,10 @@
 ﻿"use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, ImagePlus, Loader2, Check, X, Send, ZoomIn } from "lucide-react";
+import { toast } from "sonner";
+import { uploadImage } from "@/lib/cloudinary";
 import { PhotoType, type OrderPhoto } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { viberLink, telegramLinkByPhone, smsLink, tplProcessUpdate } from "@/lib/messenger";
-import { deletePhoto } from "@/app/(crm)/orders/[id]/actions";
+import { deletePhoto, addProcessPhotos } from "@/app/(crm)/orders/[id]/actions";
 
 interface ProcessPhotosProps {
   orderId: string;
@@ -152,6 +154,54 @@ export function ProcessPhotos({
   const [isPending, startTransition] = useTransition();
   const [lightboxPhoto, setLightboxPhoto] = useState<OrderPhoto | null>(null);
   const [sendPhoto, setSendPhoto] = useState<OrderPhoto | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    const MAX_FILES = 10;
+    const MAX_SIZE  = 10 * 1024 * 1024; // 10 MB
+    if (files.length > MAX_FILES) {
+      toast.error(`Максимум ${MAX_FILES} фото за раз`);
+      return;
+    }
+    for (const f of files) {
+      if (f.size > MAX_SIZE) {
+        toast.error(`Файл "${f.name}" більший за 10 MB`);
+        return;
+      }
+    }
+
+    setUploading(true);
+    setUploadProgress({ done: 0, total: files.length });
+
+    try {
+      const urls: string[] = [];
+      for (const file of files) {
+        const url = await uploadImage(file);
+        urls.push(url);
+        setUploadProgress((p) => p ? { ...p, done: p.done + 1 } : null);
+      }
+
+      const result = await addProcessPhotos(orderId, urls);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Додано ${result.count} фото`);
+      router.refresh();
+    } catch (err) {
+      console.error("[uploadPhotos]", err);
+      toast.error(err instanceof Error ? err.message : "Помилка завантаження");
+    } finally {
+      setUploading(false);
+      setUploadProgress(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   const actInPhotos = initialPhotos.filter((p) => p.type === PhotoType.ACT_IN);
   const processPhotos = initialPhotos.filter((p) => p.type === PhotoType.PROCESS);
@@ -230,16 +280,34 @@ export function ProcessPhotos({
             />
           )}
 
-          {/* Upload placeholder */}
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            disabled={uploading}
+          />
+
           <Button
             variant="outline"
-            className="w-full gap-2 text-muted-foreground"
-            disabled
-            title="Буде доступно після налаштування Cloudinary"
+            className="w-full gap-2"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || isPending}
           >
-            <ImagePlus className="size-4" />
-            Завантажити фото
-            <span className="ml-1 text-xs">(незабаром)</span>
+            {uploading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Завантаження{uploadProgress ? ` ${uploadProgress.done}/${uploadProgress.total}` : "..."}
+              </>
+            ) : (
+              <>
+                <ImagePlus className="size-4" />
+                Завантажити фото
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>

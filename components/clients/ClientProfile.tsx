@@ -24,6 +24,7 @@ import {
   addVehicle,
   removeVehicle,
   deleteClient,
+  editClient,
 } from "@/app/(crm)/clients/[id]/actions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -109,6 +110,94 @@ function NoteEditor({ clientId, initial }: { clientId: string; initial: string |
         </Button>
         <Button size="sm" variant="outline" onClick={cancel} disabled={isPending}>
           <X className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── Client header editor (name + phone) ──────────────────────────────────────
+
+function ClientHeaderEditor({
+  clientId,
+  initialName,
+  initialPhone,
+}: {
+  clientId: string;
+  initialName: string;
+  initialPhone: string;
+}) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(initialName);
+  const [phone, setPhone] = useState(initialPhone);
+  const [isPending, startTransition] = useTransition();
+
+  function save() {
+    startTransition(async () => {
+      const res = await editClient(clientId, { name, phone });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Збережено");
+      setEditing(false);
+      router.refresh();
+    });
+  }
+
+  function cancel() {
+    setName(initialName);
+    setPhone(initialPhone);
+    setEditing(false);
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold leading-tight">{initialName}</h2>
+          <a
+            href={`tel:${initialPhone}`}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            {initialPhone}
+          </a>
+        </div>
+        <button
+          onClick={() => setEditing(true)}
+          className="shrink-0 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Редагувати клієнта"
+          title="Редагувати"
+        >
+          <Pencil className="size-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Імʼя"
+        disabled={isPending}
+        autoFocus
+      />
+      <Input
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="+380XXXXXXXXX"
+        type="tel"
+        disabled={isPending}
+      />
+      <div className="flex gap-2">
+        <Button size="sm" onClick={save} disabled={isPending} className="flex-1">
+          {isPending ? <Loader2 className="size-4 animate-spin" /> : "Зберегти"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={cancel} disabled={isPending}>
+          Скасувати
         </Button>
       </div>
     </div>
@@ -222,17 +311,18 @@ export function ClientProfile({ id, name, phone, note, vehicles, orders }: Clien
     <div className="flex flex-col gap-4 p-4 pb-10">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-bold leading-tight">{name}</h2>
-            <a href={`tel:${phone}`} className="text-sm text-muted-foreground hover:text-foreground hover:underline">
-              {phone}
-            </a>
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <ClientHeaderEditor
+              clientId={id}
+              initialName={name}
+              initialPhone={phone}
+            />
           </div>
           <button
             onClick={handleDelete}
             disabled={isPending}
-            className="rounded-full p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+            className="shrink-0 rounded-full p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
             aria-label="Видалити клієнта"
           >
             <Trash2 className="size-4" />

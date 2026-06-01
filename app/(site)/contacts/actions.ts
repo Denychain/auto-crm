@@ -6,6 +6,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 import { prisma } from "@/lib/prisma";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { revalidatePath } from "next/cache";
+import { normalizePhone } from "@/lib/phone";
 
 // TODO: add rate-limiting via Upstash Redis when UPSTASH_REDIS_REST_URL is set
 // import { Ratelimit } from "@upstash/ratelimit";
@@ -34,13 +35,7 @@ export type ContactRequestResult =
   | { ok: true;  orderId: string }
   | { ok: false; error: string  };
 
-// ── Phone normalizer → +380XXXXXXXXX ────────────────────────────────────────
-function normalizePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  // e.g. 0931234567 → 380931234567; or already 380931234567
-  const core = digits.startsWith("38") ? digits : "38" + digits;
-  return "+" + core;
-}
+// normalizePhone is imported from @/lib/phone
 
 // ── Server action ────────────────────────────────────────────────────────────
 export async function submitContactRequest(
