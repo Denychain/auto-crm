@@ -27,15 +27,17 @@ interface Lot {
   price: string;
   priceType: string;
   eta: string;
+  img?: string;
 }
 
 /* ── data ───────────────────────────────────────────── */
 const LOTS: Lot[] = [
   {
     id: "lot-1", status: "transit", statusLabel: "В дорозі", lotNum: "LOT · 47821",
-    title: "BMW X5 xDrive40i", year: "2020", lot: "Copart · CA", mileage: "62k mi",
+    title: "BMW 3 Series M Sport", year: "2020", lot: "Copart · CA", mileage: "62k mi",
     damage: "Front", title_type: "Salvage", progress: 55, price: "$28 400", priceType: "ALL-IN",
     eta: "ETA · 14 днів",
+    img: "/assets/us/cases/bmw3-before.jpg",
     stages: [
       { label: "Аук.", done: true, cur: false },
       { label: "Ставка", done: true, cur: false },
@@ -46,9 +48,10 @@ const LOTS: Lot[] = [
   },
   {
     id: "lot-2", status: "repair", statusLabel: "На ремонті", lotNum: "LOT · 47711",
-    title: "Tesla Model 3 LR AWD", year: "2021", lot: "IAAI · NY", mileage: "41k mi",
+    title: "Tesla Model Y LR AWD", year: "2021", lot: "IAAI · NY", mileage: "41k mi",
     damage: "Side", title_type: "Salvage", progress: 80, price: "$31 900", priceType: "ALL-IN",
     eta: "Видача · 8 днів",
+    img: "/assets/us/cases/tesla-y-before.jpg",
     stages: [
       { label: "Аук.", done: true, cur: false },
       { label: "Ставка", done: true, cur: false },
@@ -62,6 +65,7 @@ const LOTS: Lot[] = [
     title: "Audi Q5 Premium Plus", year: "2022", lot: "Copart · FL", mileage: "28k mi",
     damage: "Hail", title_type: "Salvage", progress: 15, price: "~$27 500", priceType: "EST.",
     eta: "Торги · сьогодні",
+    img: "/assets/us/wall/02-copart-ca.png",
     stages: [
       { label: "Аук.", done: false, cur: true },
       { label: "Ставка", done: false, cur: false },
@@ -72,9 +76,10 @@ const LOTS: Lot[] = [
   },
   {
     id: "lot-4", status: "transit", statusLabel: "В дорозі", lotNum: "LOT · 47788",
-    title: "Ford Mustang GT 5.0", year: "2019", lot: "Copart · TX", mileage: "34k mi",
+    title: "Ford F-150 Lariat", year: "2020", lot: "Copart · TX", mileage: "34k mi",
     damage: "Rear", title_type: "Salvage", progress: 45, price: "$23 800", priceType: "ALL-IN",
     eta: "ETA · 22 дні",
+    img: "/assets/us/cases/f150-before.jpg",
     stages: [
       { label: "Аук.", done: true, cur: false },
       { label: "Ставка", done: true, cur: false },
@@ -88,6 +93,7 @@ const LOTS: Lot[] = [
     title: "Honda Accord Sport", year: "2020", lot: "IAAI · IL", mileage: "56k mi",
     damage: "Minor", title_type: "Clean (rebuilt)", progress: 100, price: "$19 200", priceType: "ALL-IN",
     eta: "До видачі",
+    img: "/assets/us/wall/08-detail-final.jpg",
     stages: [
       { label: "Аук.", done: true, cur: false },
       { label: "Ставка", done: true, cur: false },
@@ -101,6 +107,7 @@ const LOTS: Lot[] = [
     title: "Toyota RAV4 XLE Premium", year: "2021", lot: "Copart · GA", mileage: "38k mi",
     damage: "Front", title_type: "Salvage", progress: 70, price: "$24 600", priceType: "ALL-IN",
     eta: "Видача · 12 днів",
+    img: "/assets/us/wall/06-spray-booth.jpg",
     stages: [
       { label: "Аук.", done: true, cur: false },
       { label: "Ставка", done: true, cur: false },
@@ -391,7 +398,11 @@ export default function UsCarsClient() {
                 <div className="lot-media">
                   <span className="status">{lot.statusLabel}</span>
                   <span className="lot-id">{lot.lotNum}</span>
-                  <span className="ph">{lot.title} · {lot.lot}</span>
+                  {lot.img
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={lot.img} alt={`${lot.title} · ${lot.lot}`} loading="lazy" />
+                    : <span className="ph">{lot.title} · {lot.lot}</span>
+                  }
                 </div>
                 <div className="lot-body">
                   <div className="lot-title">
