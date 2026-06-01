@@ -6,6 +6,14 @@ import { revalidatePath } from "next/cache";
 import { getCurrentRate } from "@/lib/exchange-rate";
 import { requireAuth } from "@/lib/auth";
 import { computeOrderTotals } from "@/lib/finance";
+import { z } from "zod";
+
+const UpdateFinanceSchema = z.object({
+  totalPaid: z.number().min(0, "Сума оплачено не може бути від'ємною"),
+  advancePayment: z.number().min(0, "Завдаток не може бути від'ємним"),
+  estimatedPrice: z.number().min(0).optional(),
+  currency: z.nativeEnum(Currency).optional(),
+});
 
 function revalidate(orderId: string) {
   revalidatePath(`/orders/${orderId}`);
@@ -158,30 +166,34 @@ export async function deletePart(
 export async function updateFinance(
   orderId: string,
   data: { totalPaid: number; advancePayment: number; estimatedPrice?: number; currency?: Currency }
-): Promise<void> {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireAuth();
+
+  const parsed = UpdateFinanceSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Помилка валідації" };
+  }
+
   // При зміні валюти замовлення — заморожуємо поточний курс у baseExchangeRate
   let rateUpdate: Record<string, unknown> = {};
-  if (data.currency) {
+  if (parsed.data.currency) {
     const current = await prisma.order.findUnique({
       where: { id: orderId },
       select: { currency: true },
     });
-    if (current && current.currency !== data.currency) {
+    if (current && current.currency !== parsed.data.currency) {
       rateUpdate = { baseExchangeRate: await getCurrentRate() };
     }
   }
   await prisma.order.update({
     where: { id: orderId },
     data: {
-      totalPaid: data.totalPaid,
-      advancePayment: data.advancePayment,
-      ...(data.estimatedPrice !== undefined ? { estimatedPrice: data.estimatedPrice } : {}),
-      ...(data.currency ? { currency: data.currency } : {}),
+      ...parsed.data,
       ...rateUpdate,
     },
   });
   revalidate(orderId);
+  return { ok: true };
 }
 
 // ── Worker shares ────────────────────────────────────────────────────────────

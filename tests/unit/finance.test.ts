@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getDateRangeForPeriod, handleOrderClosed } from "@/lib/finance";
+import { getPaymentStatus } from "@/lib/finance-pure";
 import { Currency } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { prisma } from "@/lib/prisma";
@@ -239,5 +240,44 @@ describe("updateWorkerShareAmount currency", () => {
     expect(call.data.amount).toBe(250);
     expect(call.data.sharePercent).toBeNull();
     expect("currency" in call.data).toBe(false);
+  });
+});
+
+// ── getPaymentStatus (ext.change #13) ─────────────────────────────────────────
+describe("getPaymentStatus", () => {
+  it("empty order with no payments", () => {
+    expect(getPaymentStatus(0, 0, 0)).toEqual({ kind: "empty" });
+  });
+
+  it("advance-only on empty order", () => {
+    expect(getPaymentStatus(0, 0, 500)).toEqual({ kind: "advance-only", advance: 500 });
+  });
+
+  it("paid + advance on empty (sums correctly)", () => {
+    expect(getPaymentStatus(0, 200, 300)).toEqual({ kind: "advance-only", advance: 500 });
+  });
+
+  it("owed when nothing paid", () => {
+    expect(getPaymentStatus(5000, 0, 0)).toEqual({ kind: "owed", debt: 5000 });
+  });
+
+  it("partial payment", () => {
+    expect(getPaymentStatus(5000, 2000, 500)).toEqual({ kind: "owed", debt: 2500 });
+  });
+
+  it("fully paid via advance only", () => {
+    expect(getPaymentStatus(5000, 0, 5000)).toEqual({ kind: "paid" });
+  });
+
+  it("fully paid via mix", () => {
+    expect(getPaymentStatus(5000, 4000, 1000)).toEqual({ kind: "paid" });
+  });
+
+  it("overpayment (change due)", () => {
+    expect(getPaymentStatus(5000, 6000, 0)).toEqual({ kind: "overpaid", over: 1000 });
+  });
+
+  it("epsilon tolerance for paid", () => {
+    expect(getPaymentStatus(5000.005, 5000, 0)).toEqual({ kind: "paid" });
   });
 });

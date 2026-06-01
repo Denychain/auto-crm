@@ -141,6 +141,44 @@ export function computeOrderTotals(
   };
 }
 
+// ── Статус оплати замовлення ───────────────────────────────────────────────────
+
+export type PaymentStatus =
+  | { kind: "empty" }
+  | { kind: "advance-only"; advance: number }
+  | { kind: "owed"; debt: number }
+  | { kind: "paid" }
+  | { kind: "overpaid"; over: number };
+
+/**
+ * Визначає, в якому стані оплати знаходиться замовлення.
+ * Усі суми в одній валюті (як правило, displayCurrency).
+ *
+ * - empty:        замовлення ще не заповнене (немає робіт і запчастин)
+ * - advance-only: нічого не вписано, але є завдаток
+ * - owed:         є сума замовлення, не сплачено повністю
+ * - paid:         сума замовлення повністю покрита (paid + advance)
+ * - overpaid:     внесено більше за суму замовлення (потенційна здача)
+ */
+export function getPaymentStatus(
+  orderTotal: number,
+  paid: number,
+  advance: number
+): PaymentStatus {
+  const EPSILON = 0.01;
+  const sum = (paid || 0) + (advance || 0);
+
+  if (orderTotal < EPSILON) {
+    if (sum > EPSILON) return { kind: "advance-only", advance: sum };
+    return { kind: "empty" };
+  }
+
+  if (sum < EPSILON) return { kind: "owed", debt: orderTotal };
+  if (sum > orderTotal + EPSILON) return { kind: "overpaid", over: sum - orderTotal };
+  if (sum >= orderTotal - EPSILON) return { kind: "paid" };
+  return { kind: "owed", debt: orderTotal - sum };
+}
+
 // ── Борг і агрегати ────────────────────────────────────────────────────────────
 
 export interface DebtorRow {
