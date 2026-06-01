@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { MoneyInput } from "@/components/ui/MoneyInput";
-import { cn } from "@/lib/utils";
 import { uploadImage } from "@/lib/cloudinary";
 import {
   searchVehicleByPlate,

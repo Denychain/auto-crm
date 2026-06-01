@@ -251,9 +251,12 @@ export async function applyShareTemplate(
   ]);
   if (!order || !template) return { needWorkers: [] };
 
-  // База розподілу = сума робіт (матеріали — pass-through, не діляться)
-  const rate = (await getCurrentRate()).toNumber();
-  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], Currency.UAH, rate).poolForPeople;
+  // База розподілу і збережена сума — в одній валюті (Settings.defaultCurrency),
+  // із заморозкою поточного курсу.
+  const shareCurrency = await getDefaultCurrency();
+  const rateDecimal = await getCurrentRate();
+  const rate = rateDecimal.toNumber();
+  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], shareCurrency, rate).poolForPeople;
 
   const needWorkers: WorkerRole[] = [];
 
@@ -261,12 +264,14 @@ export async function applyShareTemplate(
     // Знайти існуючий share з відповідною роллю
     const existing = order.workerShares.find((s) => s.roleSnapshot === rule.role);
     if (existing) {
-      // Оновити % і перерахувати суму
+      // Оновити % і перерахувати суму у валюті бази розподілу
       await prisma.workerShare.update({
         where: { id: existing.id },
         data: {
           sharePercent: rule.percent,
           amount: (base * rule.percent) / 100,
+          currency: shareCurrency,
+          exchangeRate: rateDecimal,
         },
       });
     } else {
@@ -283,7 +288,8 @@ export async function addWorkerShareFromDirectory(
   workerId: string,
   role: WorkerRole,
   sharePercent: number | null,
-  fixedAmount: number | null
+  fixedAmount: number | null,
+  currency?: Currency
 ): Promise<void> {
   await requireAuth();
   const [order, worker] = await Promise.all([
@@ -295,9 +301,11 @@ export async function addWorkerShareFromDirectory(
   ]);
   if (!order || !worker) return;
 
-  // База розподілу = сума робіт (матеріали — pass-through, не діляться)
+  // База розподілу і збережена сума — в одній валюті, із заморозкою курсу.
+  // Для фіксованої суми беремо валюту з форми; для % — Settings.defaultCurrency.
+  const shareCurrency = currency ?? (await getDefaultCurrency());
   const rate = await getCurrentRate();
-  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], Currency.UAH, rate.toNumber()).poolForPeople;
+  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], shareCurrency, rate.toNumber()).poolForPeople;
 
   const amount =
     sharePercent != null ? (base * sharePercent) / 100 : (fixedAmount ?? 0);
@@ -309,7 +317,7 @@ export async function addWorkerShareFromDirectory(
       roleSnapshot: role,
       sharePercent: sharePercent,
       amount,
-      currency: Currency.UAH,
+      currency: shareCurrency,
       exchangeRate: rate,
     },
   });
@@ -328,15 +336,19 @@ export async function updateWorkerSharePercent(
   });
   if (!order) return;
 
-  // База розподілу = сума робіт (матеріали — pass-through, не діляться)
-  const rate = (await getCurrentRate()).toNumber();
-  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], Currency.UAH, rate).poolForPeople;
+  // База розподілу і збережена сума — в одній валюті (Settings.defaultCurrency),
+  // із заморозкою поточного курсу.
+  const shareCurrency = await getDefaultCurrency();
+  const rateDecimal = await getCurrentRate();
+  const base = computeOrderTotals(order as Parameters<typeof computeOrderTotals>[0], shareCurrency, rateDecimal.toNumber()).poolForPeople;
 
   await prisma.workerShare.update({
     where: { id: shareId },
     data: {
       sharePercent,
       amount: (base * sharePercent) / 100,
+      currency: shareCurrency,
+      exchangeRate: rateDecimal,
     },
   });
   revalidate(orderId);
@@ -345,12 +357,19 @@ export async function updateWorkerSharePercent(
 export async function updateWorkerShareAmount(
   shareId: string,
   orderId: string,
-  amount: number
+  amount: number,
+  currency?: Currency
 ): Promise<void> {
   await requireAuth();
+  // При зміні фіксованої суми зберігаємо валюту запису та заморожуємо курс.
+  const rate = currency ? await getCurrentRate() : undefined;
   await prisma.workerShare.update({
     where: { id: shareId },
-    data: { sharePercent: null, amount },
+    data: {
+      sharePercent: null,
+      amount,
+      ...(currency ? { currency, exchangeRate: rate } : {}),
+    },
   });
   revalidate(orderId);
 }

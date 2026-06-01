@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { MoneyInput } from "@/components/ui/MoneyInput";
 import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/currency";
+import { formatMoney, convert } from "@/lib/currency";
 import type { OrderTotals } from "@/lib/finance";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import {
@@ -120,8 +120,13 @@ function WorkerRow({
       setUsePercent(false);
       onUpdateAmount(share.id, computedAmount, displayCurrency);
     } else {
-      // switch to %
-      const pct = base > 0 ? (computedAmount / base) * 100 : 0;
+      // switch to % — приводимо суму до displayCurrency (валюта base) перед діленням
+      const amtInDisplay = convert(
+        { amount: computedAmount, currency: shareCurrency },
+        displayCurrency,
+        rate ?? undefined
+      );
+      const pct = base > 0 ? (amtInDisplay / base) * 100 : 0;
       setLocalPct(pct.toFixed(1));
       setUsePercent(true);
       onUpdatePercent(share.id, pct);
