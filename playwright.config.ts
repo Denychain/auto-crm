@@ -14,7 +14,7 @@ const STORAGE_STATE = "tests/e2e/.auth/owner.json";
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "**/*.spec.ts",
-  timeout: 30_000,
+  timeout: 45_000, // дає першому компайлу маршруту в next dev завершитись під навантаженням
   expect: { timeout: 15_000 },
   fullyParallel: false, // sequential — shared test DB
   retries: 1, // гасить cold-start (перший компайл next dev + прокидання Neon)

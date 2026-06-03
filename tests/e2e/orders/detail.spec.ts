@@ -26,7 +26,10 @@ test.describe("Order Detail", () => {
   test("shows vehicle plate on detail page", async ({ page }) => {
     await goToFirstOrder(page);
     // plateNumber is rendered in VehicleClientInfo as plain text, e.g. "AA1111BB"
-    await expect(page.getByText(/[A-Z]{2}\d{3,4}[A-Z]{2}/).first()).toBeVisible();
+    // or a Cyrillic UA plate like "АТ1819НР" — match both alphabets.
+    await expect(
+      page.getByText(/[A-ZА-ЯІЇЄҐ]{2}\s?\d{3,4}\s?[A-ZА-ЯІЇЄҐ]{2}/).first()
+    ).toBeVisible();
   });
 
   test("shows order status badge", async ({ page }) => {

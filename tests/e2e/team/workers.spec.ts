@@ -38,8 +38,9 @@ test.describe("Team / Workers settings", () => {
     await page.goto("/settings/share-templates");
     await page.waitForLoadState("networkidle");
 
+    // Seeded templates are named e.g. "Власник 50% / Майстер 50%"
     const hasTemplates =
-      await page.getByText(/стандарт|соло|standard|solo/i).first().isVisible().catch(() => false);
+      await page.getByText(/власник|майстер|підготовщик|%/i).first().isVisible().catch(() => false);
     const hasEmpty =
       await page.getByText(/немає|empty|додайте/i).first().isVisible().catch(() => false);
 
