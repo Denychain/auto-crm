@@ -17,7 +17,11 @@ export default defineConfig({
   timeout: 45_000, // дає першому компайлу маршруту в next dev завершитись під навантаженням
   expect: { timeout: 15_000 },
   fullyParallel: false, // sequential — shared test DB
-  retries: 1, // гасить cold-start (перший компайл next dev + прокидання Neon)
+  // 1 воркер: кілька воркерів одночасно перевантажують on-demand компілятор
+  // next dev (перший запит до маршруту компілюється) → page.goto таймаутить.
+  // Серіалізація робить прогон детермінованим (компайл по черзі, швидко).
+  workers: 1,
+  retries: 1, // підстраховка на разовий cold-start / прокидання Neon
   reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
 
   use: {
