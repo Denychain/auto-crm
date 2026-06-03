@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { WorkerRole, Currency } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 import { prisma } from "@/lib/prisma";
+
+// requireAuth тягне next-auth (@/auth) — мокаємо, щоб імпорт server action не
+// падав на резолві next/server у jsdom-середовищі.
+vi.mock("@/lib/auth", () => ({
+  requireAuth: vi.fn().mockResolvedValue({ id: "u1", name: "Test" }),
+  getCurrentUser: vi.fn().mockResolvedValue({ id: "u1", name: "Test" }),
+}));
+
 import { applyShareTemplate } from "@/app/(crm)/orders/[id]/actions";
 
 const mockPrisma = vi.mocked(prisma);
@@ -30,7 +39,11 @@ function validateDistribution(shares: { amount: number }[], base: number) {
 
 // ── applyShareTemplate server action ──────────────────────────────────────────
 describe("applyShareTemplate", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // applyShareTemplate викликає getCurrentRate() → читає кешований курс із БД
+    mockPrisma.exchangeRate.findUnique.mockResolvedValue({ usdToUah: new Decimal(40) } as never);
+  });
 
   const mockOrder = {
     id: "order-1",
